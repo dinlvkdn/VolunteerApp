@@ -6,7 +6,6 @@ namespace Volunteer.DAL
     {
         public DateTime Time { get; set; }
         public string Status { get; set; }
-
         public Guid OrganizationId { get; set; }
         public Organization Organization { get; set; }
     }

@@ -8,15 +8,17 @@ namespace Volunteer.DAL.DataAccess.Configurations
     {
         public void Configure(EntityTypeBuilder<User> builder)
         {
-            builder
-                .HasOne(x => x.Volunteer)
-                .WithOne(x => x.User)
-                .HasForeignKey<User>(x => x.VolunteerId);
-            builder
-                .HasOne(x => x.Organization)
-                .WithOne(x => x.User)
-                .HasForeignKey<User>(x => x.OrganizationId);
             builder.HasKey(x => x.Id);
+
+            builder.HasOne(x => x.Organization)
+            .WithOne(x => x.User)
+            .HasForeignKey<Organization>(x => x.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasOne(x => x.Volunteer)
+                .WithOne(x => x.User)
+                .HasForeignKey<Models.Volunteer>(x => x.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

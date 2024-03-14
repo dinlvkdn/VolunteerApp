@@ -76,9 +76,6 @@ namespace Volunteer.BL.Services
         }
 
         public async Task<bool> SaveChangesAsync()
-        {
-            var save = await _dbContext.SaveChangesAsync();
-            return save > 0 ? true : false;
-        }
+             => await _dbContext.SaveChangesAsync() > 0;
     }
 }

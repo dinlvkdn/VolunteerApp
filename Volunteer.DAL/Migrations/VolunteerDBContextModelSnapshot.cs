@@ -117,10 +117,16 @@ namespace Volunteer.DAL.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<int>("YearOfFoundation")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
 
                     b.ToTable("Organizations");
                 });
@@ -131,11 +137,21 @@ namespace Volunteer.DAL.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("FileUrl")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid>("VolunteerId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("VolunteerId")
+                        .IsUnique();
 
                     b.ToTable("Resumes");
                 });
@@ -150,32 +166,7 @@ namespace Volunteer.DAL.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid?>("OrganizationId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("RoleName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid?>("VolunteerId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("OrganizationId")
-                        .IsUnique()
-                        .HasFilter("[OrganizationId] IS NOT NULL");
-
-                    b.HasIndex("VolunteerId")
-                        .IsUnique()
-                        .HasFilter("[VolunteerId] IS NOT NULL");
 
                     b.ToTable("Users");
                 });
@@ -201,12 +192,12 @@ namespace Volunteer.DAL.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid>("ResumeId")
+                    b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ResumeId")
+                    b.HasIndex("UserId")
                         .IsUnique();
 
                     b.ToTable("Volunteers");
@@ -292,30 +283,37 @@ namespace Volunteer.DAL.Migrations
                     b.Navigation("Volunteer");
                 });
 
-            modelBuilder.Entity("Volunteer.DAL.Models.User", b =>
+            modelBuilder.Entity("Volunteer.DAL.Models.Organization", b =>
                 {
-                    b.HasOne("Volunteer.DAL.Models.Organization", "Organization")
-                        .WithOne("User")
-                        .HasForeignKey("Volunteer.DAL.Models.User", "OrganizationId");
+                    b.HasOne("Volunteer.DAL.Models.User", "User")
+                        .WithOne("Organization")
+                        .HasForeignKey("Volunteer.DAL.Models.Organization", "UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Volunteer.DAL.Models.Resume", b =>
+                {
                     b.HasOne("Volunteer.DAL.Models.Volunteer", "Volunteer")
-                        .WithOne("User")
-                        .HasForeignKey("Volunteer.DAL.Models.User", "VolunteerId");
-
-                    b.Navigation("Organization");
+                        .WithOne("Resume")
+                        .HasForeignKey("Volunteer.DAL.Models.Resume", "VolunteerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Volunteer");
                 });
 
             modelBuilder.Entity("Volunteer.DAL.Models.Volunteer", b =>
                 {
-                    b.HasOne("Volunteer.DAL.Models.Resume", "Resume")
+                    b.HasOne("Volunteer.DAL.Models.User", "User")
                         .WithOne("Volunteer")
-                        .HasForeignKey("Volunteer.DAL.Models.Volunteer", "ResumeId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasForeignKey("Volunteer.DAL.Models.Volunteer", "UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Resume");
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Volunteer.DAL.Models.VolunteerJobOffer", b =>
@@ -366,13 +364,13 @@ namespace Volunteer.DAL.Migrations
                     b.Navigation("JobOffers");
 
                     b.Navigation("StatusHistories");
-
-                    b.Navigation("User")
-                        .IsRequired();
                 });
 
-            modelBuilder.Entity("Volunteer.DAL.Models.Resume", b =>
+            modelBuilder.Entity("Volunteer.DAL.Models.User", b =>
                 {
+                    b.Navigation("Organization")
+                        .IsRequired();
+
                     b.Navigation("Volunteer")
                         .IsRequired();
                 });
@@ -381,7 +379,7 @@ namespace Volunteer.DAL.Migrations
                 {
                     b.Navigation("Members");
 
-                    b.Navigation("User")
+                    b.Navigation("Resume")
                         .IsRequired();
 
                     b.Navigation("VolunteerJobOffers");

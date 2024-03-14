@@ -1,4 +1,5 @@
 ﻿using Domain.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Volunteer.BL.Interfaces;
 
@@ -6,6 +7,7 @@ namespace Volunteer.WebAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "Organization")]
     public class OrganizationController : ControllerBase
     {
         private readonly IOrganizationService _organizationService;
@@ -17,21 +19,23 @@ namespace Volunteer.WebAPI.Controllers
 
 
         [HttpPost]
-        public async Task<IActionResult> AddOrganization([FromBody] OrganizationInfoDTO organizationInfoDTO)
+        public async Task<IActionResult> AddOrganization(OrganizationInfoDTO organizationInfoDTO)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            }
-            var existingOrganization = await _organizationService.GetOrganizationById(organizationInfoDTO.IdOrganization);
+
+            var existingOrganization = await _organizationService.GetOrganizationById(organizationInfoDTO.Id);
+
             if (existingOrganization != null)
             {
                 return BadRequest("Organization is already exist");
             }
-            if (await _organizationService.AddOrganization(organizationInfoDTO))
+
+            var organization = await _organizationService.AddOrganization(organizationInfoDTO);
+
+            if (organization != null)
             {
-                return Ok();
+                return Ok(organization);
             }
             else
             {
@@ -69,7 +73,7 @@ namespace Volunteer.WebAPI.Controllers
                 return BadRequest(ModelState);
 
             }
-            var organizationToUpdate = await _organizationService.GetOrganizationById(organizationInfoDTO.IdOrganization);
+            var organizationToUpdate = await _organizationService.GetOrganizationById(organizationInfoDTO.Id);
             if (organizationToUpdate == null)
             {
                 return NotFound("Organization not found");

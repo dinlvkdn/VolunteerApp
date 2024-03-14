@@ -20,7 +20,6 @@ namespace Volunteer.DAL.DataAccess
         {
 
         }
-
         public VolunteerDBContext(DbContextOptions<VolunteerDBContext> option) : base(option)
         {
 
@@ -41,9 +40,10 @@ namespace Volunteer.DAL.DataAccess
             builder.ApplyConfiguration(new StatusHistoryConfiguration());
             builder.ApplyConfiguration(new VolunteerConfiguration());
             builder.ApplyConfiguration(new VolunteerJobOfferConfiguration());
+            builder.ApplyConfiguration(new UserConfiguration());
+
             base.OnModelCreating(builder);
         }
-
     }
 }
 

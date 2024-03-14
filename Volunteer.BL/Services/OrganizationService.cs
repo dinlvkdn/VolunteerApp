@@ -8,31 +8,25 @@ namespace Volunteer.BL.Services
 {
     public class OrganizationService : IOrganizationService
     {
-        private readonly VolunteerDBContext dbContext;
+        private readonly VolunteerDBContext _dbContext;
 
         public OrganizationService(VolunteerDBContext dbContext)
         {
-            this.dbContext = dbContext;
+            this._dbContext = dbContext;
         }
-        public async Task<bool> AddOrganization(OrganizationInfoDTO organizationInfoDTO)
+        public async Task<OrganizationInfoDTO> AddOrganization(OrganizationInfoDTO organizationInfoDTO)
         {
-            var existingOrganization = await dbContext.Organizations.FindAsync(organizationInfoDTO.IdOrganization);
-            
-            if (existingOrganization != null)
-            {
-                return false; 
-            }
-
             var organization = new Organization
             {
-                Id = organizationInfoDTO.IdOrganization,
+                Id = organizationInfoDTO.Id,
                 Name = organizationInfoDTO.Name,
-                YearOfFoundation = organizationInfoDTO.YearOfFoundation,
-                Description = organizationInfoDTO.Description
+               
             };
 
-            await dbContext.Organizations.AddAsync(organization);
-            return await SaveChangesAsync();
+            await _dbContext.Organizations.AddAsync(organization);
+            await _dbContext.SaveChangesAsync();
+
+            return organizationInfoDTO;
         }
 
         public async Task<bool> DeleteOrganization(Guid IdOrganization)
@@ -42,19 +36,19 @@ namespace Volunteer.BL.Services
             {
                 return false;
             }
-            
-            dbContext.Organizations.Remove(organization);
+
+            _dbContext.Organizations.Remove(organization);
             return await SaveChangesAsync();
         }
 
         public async Task<Organization> GetOrganizationById(Guid id)
         {
-            return await dbContext.Organizations.FindAsync(id);
+            return await _dbContext.Organizations.FirstOrDefaultAsync(i => i.Id == id);
         }
 
         public async Task<bool> UpdateOrganization(OrganizationInfoDTO organizationInfoDTO)
         {
-            var organization = await dbContext.Organizations.FindAsync(organizationInfoDTO.IdOrganization);
+            var organization = await _dbContext.Organizations.FindAsync(organizationInfoDTO.Id);
 
             if (organization == null)
             {
@@ -62,17 +56,14 @@ namespace Volunteer.BL.Services
             }
 
             organization.Name = organizationInfoDTO.Name;
-            organization.YearOfFoundation = organizationInfoDTO.YearOfFoundation;
-            organization.Description = organizationInfoDTO.Description;
+            //organization.YearOfFoundation = organizationInfoDTO.YearOfFoundation;
+            //organization.Description = organizationInfoDTO.Description;
 
-            dbContext.Organizations.Update(organization);
+            _dbContext.Organizations.Update(organization);
             return await SaveChangesAsync();
         }
 
         public async Task<bool> SaveChangesAsync()
-        {
-            var save = await dbContext.SaveChangesAsync();
-            return save > 0 ? true : false;
-        }
+            => await _dbContext.SaveChangesAsync() > 0;
     }
 }

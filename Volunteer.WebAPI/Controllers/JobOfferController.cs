@@ -75,10 +75,8 @@ namespace Volunteer.WebAPI.Controllers
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetGobOfferById([FromRoute]Guid id)
         {
-            if (id == Guid.Empty)
-            {
-                return BadRequest("Id does not exist");
-            }
+            if (id == Guid.Empty) return BadRequest("Id does not exist");
+
             var jobOffer = await jobOfferService.GetGobOfferById(id);
             if(jobOffer != null)
             {
@@ -93,10 +91,8 @@ namespace Volunteer.WebAPI.Controllers
         [HttpDelete("{id:Guid}")]
         public async Task<IActionResult> DeleteJobOfferById([FromRoute] Guid id)
         {
-            if (id == Guid.Empty)
-            {
-                return BadRequest("Id does not exist");
-            }
+            if (id == Guid.Empty) return BadRequest("Id does not exist");
+
             var jobOffer = await jobOfferService.GetGobOfferById(id);
             if (jobOffer == null)
             {
@@ -111,7 +107,5 @@ namespace Volunteer.WebAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, "Job offer is not deleted");
             }
         }
-
-
     }
 }

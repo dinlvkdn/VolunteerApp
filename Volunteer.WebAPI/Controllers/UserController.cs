@@ -1,10 +1,12 @@
-﻿using Domain.DTOs;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using Volunteer.BL.Helper.Exceptions;
 using Volunteer.BL.Interfaces;
 
 namespace Volunteer.WebAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]/[action]")]
     [ApiController]
     public class UserController : ControllerBase
     {
@@ -15,91 +17,39 @@ namespace Volunteer.WebAPI.Controllers
             _userService = userService;
         }
 
-        [HttpPost]
-        public async Task<IActionResult> AddUser([FromBody] UserDTO userDTO)
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> GetById()
         {
-            if (!ModelState.IsValid)
+            Guid Id;
+            String roleName;
+            try
             {
-                return BadRequest(ModelState);
+                Id = Guid.Parse(HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
+                roleName = HttpContext.User.FindFirstValue(ClaimTypes.Role);
+            }
+            catch (Exception e)
+            {
+                throw new ApiException()
+                {
+                    StatusCode = StatusCodes.Status422UnprocessableEntity,
+                    Title = "Error parsing guid",
+                    Detail = "Error occured while parsing guid from user claims"
+                };
+            }
+            var user = await _userService.GetUserById(Id, roleName);
 
-            }
-
-            var checkUser = await _userService.GetUserByEmail(userDTO.Email);
-            if (checkUser != null)
+            if (!user)
             {
-                return BadRequest("User is already exist");
+                throw new ApiException()    
+                {
+                    StatusCode = StatusCodes.Status404NotFound,
+                    Title = "User doesn't exist",
+                    Detail = "User doesn't exist while creating user"
+                };
             }
-
-            if (await _userService.AddUser(userDTO))
-            {
-                return Ok();
-            }
-            else
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, "User is not added");
-            }
+            // return to the home page
+            return Ok("User exists");
         }
-
-        [HttpPut]
-        public async Task<IActionResult> UpdateUser([FromBody]UserDTO userDTO)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-
-            }
-            var userToUpdate = await _userService.GetUserByEmail(userDTO.Email);
-            if (userToUpdate == null)
-            {
-                return NotFound("User not found");
-            }
-            if (await _userService.UpdateUser(userDTO))
-            {
-                return Ok();
-            }
-            else
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Failed to update user");
-            }
-        }
-
-        [HttpDelete("{userId:Guid}")]   
-        public async Task<IActionResult> DeleteUser([FromRoute] Guid userId)
-        {
-            if(userId == Guid.Empty)
-            {
-                return BadRequest("Id does not exist");
-            }
-            var user = await _userService.GetUserById(userId);
-            if (user == null)
-            {
-                return NotFound("No user found");
-            }
-            if (await _userService.DeleteUserById(userId))
-            {
-                return Ok();
-            }
-            else
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, "User is not deleted");
-            }
-        }
-
-        [HttpGet("{userId:Guid}")]
-        public async Task<IActionResult> GetUserById([FromRoute] Guid userId)
-        {
-            if (userId == Guid.Empty)
-            {
-                return BadRequest("Id does not exist");
-            }
-            var user = await _userService.GetUserById(userId);
-            if (user == null)
-            {
-                return NotFound("No user found");
-            }
- 
-            return Ok(user);
-        } 
     }
 }
-

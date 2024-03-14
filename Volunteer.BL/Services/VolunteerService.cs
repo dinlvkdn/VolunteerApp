@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Volunteer.BL.Interfaces;
 using Volunteer.DAL.DataAccess;
+using Volunteer.DAL.Models;
 
 namespace Volunteer.BL.Services
 {
@@ -14,23 +15,21 @@ namespace Volunteer.BL.Services
             _dbContext = dbContext;
         }
 
-        public async Task<bool> AddVolunteer(VolunteerDTO volunteerDTO)
+        public async Task<VolunteerInfoDTO> AddVolunteer(Guid id,VolunteerInfoDTO volunteerInfoDTO)
         {
             var volunteer = new DAL.Models.Volunteer
             {
-                FirstName = volunteerDTO.FirstName,
-                LastName = volunteerDTO.LastName,
-                DateOfBirth = volunteerDTO.DateOfBirth,
-                Description = volunteerDTO.Description,
-                Id = volunteerDTO.IdVolunteer
+                Id = id,
+                DateOfBirth = volunteerInfoDTO.DateOfBirth,
+                Description = volunteerInfoDTO.Description,
+                FirstName = volunteerInfoDTO.FirstName,
+                LastName  = volunteerInfoDTO.LastName
             };
 
-            var createVolunteerResult = await _dbContext.Volunteers.AddAsync(volunteer);
-            if (createVolunteerResult != null)
-            {
+            await _dbContext.Volunteers.AddAsync(volunteer);
+            await _dbContext.SaveChangesAsync();
 
-            }
-            return await SaveChangesAsync();
+            return volunteerInfoDTO;
         }
 
         public async Task<bool> DeleteVolunteer(Guid volunteerId)
@@ -40,37 +39,48 @@ namespace Volunteer.BL.Services
             {
                 return false;
             }
+
             _dbContext.Volunteers.Remove(volunteer);
+
             return await SaveChangesAsync();
         }
 
         public async Task<DAL.Models.Volunteer> GetVolunteerById(Guid id)
         {
-            return await _dbContext.Volunteers.FindAsync(id);
+            return await _dbContext.Volunteers.FirstOrDefaultAsync(i => i.Id == id);
         }
 
-        public async Task<bool> UpdateVolunteer(VolunteerDTO volunteerDTO)
+        public async Task<bool> UpdateVolunteer(VolunteerInfoDTO volunteerInfoDTO)
         {
-            var volunteer = await _dbContext.Volunteers.FindAsync(volunteerDTO.IdVolunteer);
+            //var volunteer = await GetVolunteerById(volunteerInfoDTO.Id);
 
-            if (volunteer == null)
-            {
-                return false; 
-            }
+            //if (volunteer == null)
+            //{
+            //    return false; 
+            //}
 
-            volunteer.FirstName = volunteerDTO.FirstName;
-            volunteer.LastName = volunteerDTO.LastName;
-            volunteer.DateOfBirth = volunteerDTO.DateOfBirth;
-            volunteer.Description = volunteerDTO.Description;
+            //volunteer.FirstName = volunteerResumeDTO.FirstName;
+            //volunteer.LastName = volunteerResumeDTO.LastName;
+            //volunteer.Description = volunteerResumeDTO.Description;
+            
 
-            _dbContext.Volunteers.Update(volunteer);
+
+            //_dbContext.Volunteers.Update(volunteer);
+
+
+            //var resume = await _dbContext.Resumes.FirstOrDefaultAsync(r => r.VolunteerId == volunteer.Id);
+            //if (resume != null)
+            //{
+            //    resume.FileUrl = volunteerResumeDTO.FileUrl;
+            //    resume.FileName = volunteerResumeDTO.FileName;
+            //    _dbContext.Resumes.Update(resume);
+            //}
+
+
             return await SaveChangesAsync();
         }
 
         public async Task<bool> SaveChangesAsync()
-        {
-            var save = await _dbContext.SaveChangesAsync();
-            return save > 0 ? true : false;
-        }
+            => await _dbContext.SaveChangesAsync() > 0;
     }
 }
