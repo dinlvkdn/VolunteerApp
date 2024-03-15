@@ -2,24 +2,24 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Volunteer.BL.Helper.Exceptions;
-using Volunteer.BL.Interfaces;
+using Volunteer.DAL.DataAccess;
 
 namespace Volunteer.WebAPI.Controllers
 {
-    [Route("api/[controller]/[action]")]
+    [Route("api/[controller]")]
     [ApiController]
     public class UserController : ControllerBase
     {
-        private readonly IUserService _userService;
+        private readonly VolunteerDBContext _dbContext;
 
-        public UserController(IUserService userService)
+        public UserController(VolunteerDBContext dbContext)
         {
-            _userService = userService;
+            _dbContext = dbContext;
         }
 
         [Authorize]
         [HttpGet]
-        public async Task<IActionResult> GetById()
+        public IActionResult GetById()
         {
             Guid Id;
             String roleName;
@@ -37,19 +37,19 @@ namespace Volunteer.WebAPI.Controllers
                     Detail = "Error occured while parsing guid from user claims"
                 };
             }
-            var user = await _userService.GetUserById(Id, roleName);
 
-            if (!user)
+            if (roleName == "Volunteer")
             {
-                throw new ApiException()    
-                {
-                    StatusCode = StatusCodes.Status404NotFound,
-                    Title = "User doesn't exist",
-                    Detail = "User doesn't exist while creating user"
-                };
+                return Redirect($"/api/Volunteer/GetVolunteerById/{Id}");
+                //return Redirect($"/api/Volunteer/{Id}");
             }
-            // return to the home page
-            return Ok("User exists");
+            else if (roleName == "Organization")
+            {
+                //return Redirect($"/api/Volunteer/GetVolunteerById/{Id}");
+                return Redirect($"/api/Organization/{Id}");
+            }
+
+            return BadRequest();
         }
     }
 }

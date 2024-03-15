@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using Volunteer.BL.Helper.Exceptions;
 using Volunteer.BL.Interfaces;
 using Volunteer.BL.Services;
 
@@ -14,12 +15,15 @@ namespace Volunteer.WebAPI
         {
             var builder = WebApplication.CreateBuilder(args);
 
+
             //Seeder
             builder.Services.AddTransient<DataSeeder>();
 
-            builder.Services.AddControllers();
+            builder.Services.AddControllers(options =>
+            {
+                options.Filters.Add(typeof(ExceptionResponseFilter));
+            });
 
-            builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IJobOfferService,JobOfferService>();
             builder.Services.AddScoped<IVolunteerService, VolunteerService>();
             builder.Services.AddScoped<IOrganizationService, OrganizationService>();

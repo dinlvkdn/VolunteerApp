@@ -1,7 +1,10 @@
 ﻿using Domain.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using Volunteer.BL.Helper.Exceptions;
 using Volunteer.BL.Interfaces;
+using Volunteer.BL.Services;
 
 namespace Volunteer.WebAPI.Controllers
 {
@@ -21,25 +24,35 @@ namespace Volunteer.WebAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> AddOrganization(OrganizationInfoDTO organizationInfoDTO)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            Guid id;
+            try
+            {
+                id = Guid.Parse(HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
+            }
+            catch (Exception e)
+            {
+                throw new ApiException()
+                {
+                    StatusCode = StatusCodes.Status422UnprocessableEntity,
+                    Title = "Error parsing guid",
+                    Detail = "Error occured while parsing guid from organization claims"
+                };
+            }
 
-
-            var existingOrganization = await _organizationService.GetOrganizationById(organizationInfoDTO.Id);
+            var existingOrganization = await _organizationService.AddOrganization(id, organizationInfoDTO);
 
             if (existingOrganization != null)
             {
-                return BadRequest("Organization is already exist");
-            }
-
-            var organization = await _organizationService.AddOrganization(organizationInfoDTO);
-
-            if (organization != null)
-            {
-                return Ok(organization);
+                return Ok(existingOrganization);
             }
             else
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Organization is not added");
+                throw new ApiException()
+                {
+                    StatusCode = StatusCodes.Status404NotFound,
+                    Title = "Organization doesn't exist",
+                    Detail = "Organization doesn't exist while creating organization"
+                };
             }
         }
 
@@ -65,28 +78,29 @@ namespace Volunteer.WebAPI.Controllers
             }
         }
 
-        [HttpPut]
-        public async Task<IActionResult> UpdateOrganization([FromBody] OrganizationInfoDTO organizationInfoDTO)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
+        //[HttpPut]
+        //public async Task<IActionResult> UpdateOrganization([FromBody] OrganizationInfoDTO organizationInfoDTO)
+        //{
+        //    if (!ModelState.IsValid)
+        //    {
+        //        return BadRequest(ModelState);
 
-            }
-            var organizationToUpdate = await _organizationService.GetOrganizationById(organizationInfoDTO.Id);
-            if (organizationToUpdate == null)
-            {
-                return NotFound("Organization not found");
-            }
-            if (await _organizationService.UpdateOrganization(organizationInfoDTO))
-            {
-                return Ok();
-            }
-            else
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Failed to update organization");
-            }
-        }
+        //    }
+
+        //    var organizationToUpdate = await _organizationService.GetOrganizationById(organizationInfoDTO.Id);
+        //    if (organizationToUpdate == null)
+        //    {
+        //        return NotFound("Organization not found");
+        //    }
+        //    if (await _organizationService.UpdateOrganization(organizationInfoDTO))
+        //    {
+        //        return Ok();
+        //    }
+        //    else
+        //    {
+        //        return StatusCode(StatusCodes.Status500InternalServerError, "Failed to update organization");
+        //    }
+        //}
 
         [HttpGet("{IdOrganization:Guid}")]
         public async Task<IActionResult> GetOrganizationById([FromRoute] Guid IdOrganization)

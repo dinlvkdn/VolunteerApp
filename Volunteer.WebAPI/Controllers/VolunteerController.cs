@@ -72,7 +72,9 @@ namespace Volunteer.WebAPI.Controllers
                     Detail = "Guid does not exist"
                 };
             }
+
             var volunteer = await volunteerService.GetVolunteerById(volunteerId);
+
             if (volunteer == null)
             {
                 throw new ApiException()
@@ -82,6 +84,7 @@ namespace Volunteer.WebAPI.Controllers
                     Detail = "Volunteer does`n exist in the database"
                 };
             }
+
             if (await volunteerService.DeleteVolunteer(volunteerId))
             {
                 return Ok("Volunteer is deleted");
@@ -98,47 +101,89 @@ namespace Volunteer.WebAPI.Controllers
             }
         }
 
-        //[HttpPut]
-        //public async Task<IActionResult> UpdateVolunteer([FromBody] VolunteerInfoDTO volunteerInfoDTO)
-        //{
-        //    if (!ModelState.IsValid)
-        //    {
-        //        return BadRequest(ModelState);
-
-        //    }
-        //    var volunteerToUpdate = await volunteerService.GetVolunteerById(volunteerInfoDTO.IdVolunteer);
-        //    if (volunteerToUpdate == null)
-        //    {
-        //        return NotFound("Volunteer not found");
-        //    }
-        //    if (await volunteerService.UpdateVolunteer(volunteerInfoDTO))
-        //    {
-        //        return Ok();
-        //    }
-        //    else
-        //    {
-        //        return StatusCode(StatusCodes.Status500InternalServerError, "Failed to update volunteer");
-        //    }
-        //}
-
-        [HttpGet("{volunteerId:Guid}")]
-        public async Task<IActionResult> GetVolunteerById([FromRoute]Guid volunteerId)
+        [HttpPut]
+        public async Task<IActionResult> UpdateVolunteer([FromBody] VolunteerShortInfoDTO volunteerDTO)
         {
-            if (volunteerId == Guid.Empty)
+            Guid id;
+
+            try
             {
-                return BadRequest("Id does not exist");
+                id = Guid.Parse(HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
             }
-            var volunteer = await volunteerService.GetVolunteerById(volunteerId);
+            catch (Exception e)
+            {
+                throw new ApiException()
+                {
+                    StatusCode = StatusCodes.Status422UnprocessableEntity,
+                    Title = "Error parsing guid",
+                    Detail = "Error occured while parsing guid from volunteer claims"
+                };
+            }
+
+            var volunteerToUpdate = await volunteerService.GetVolunteerById(id);
+
+            if (volunteerToUpdate == null)
+            {
+                throw new ApiException()
+                {
+                    StatusCode = StatusCodes.Status404NotFound,
+                    Title = "Volunteer doesn't exist",
+                    Detail = "No volunteer on database"
+                };
+            }
+
+            var volunteer = await volunteerService.UpdateVolunteer(id, volunteerDTO);
+
             if (volunteer == null)
             {
-                return NotFound("No volunteer found");
+                throw new ApiException()
+                {
+                    StatusCode = StatusCodes.Status500InternalServerError,
+                    Title = "Volunteer doesn't update",
+                    Detail = "Failed to update volunteer"
+                };
+            }
+            else
+            {
+                return Ok(volunteer);
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetVolunteerById()
+        {
+            Guid id;
+
+            try
+            {
+                id = Guid.Parse(HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
+            }
+            catch (Exception e)
+            {
+                throw new ApiException()
+                {
+                    StatusCode = StatusCodes.Status422UnprocessableEntity,
+                    Title = "Error parsing guid",
+                    Detail = "Error occured while parsing guid from volunteer claims"
+                };
+            }
+
+            var volunteer = await volunteerService.GetVolunteerById(id);
+
+            if (volunteer == null)
+            {
+                throw new ApiException()
+                {
+                    StatusCode = StatusCodes.Status404NotFound,
+                    Title = "Volunteer doesn't exist",
+                    Detail = "No volunteer on database"
+                };
             }
 
             return Ok(volunteer);
         }
   
-        [HttpPost]
-        [Authorize]
+        [HttpPost("uploadResume")]
         public async Task<IActionResult> UploadResume(IFormFile file)
         {
             Guid volunteerId;
@@ -161,8 +206,8 @@ namespace Volunteer.WebAPI.Controllers
         }
 
 
-        [HttpGet]
-        public async Task<IActionResult> DownloadResume(string fileName)
+        [HttpGet("downloadResume")]
+        public async Task<IActionResult> DownloadResume([FromQuery] string fileName)
         {
             var result = await resumeService.DownloadResume(fileName);
             return File(result.Item1, result.Item2, result.Item3);
