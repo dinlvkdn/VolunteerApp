@@ -14,13 +14,14 @@ namespace Volunteer.BL.Services
         {
             this._dbContext = dbContext;
         }
-        public async Task<OrganizationInfoDTO> AddOrganization(OrganizationInfoDTO organizationInfoDTO)
+        public async Task<OrganizationInfoDTO> AddOrganization(Guid id,OrganizationInfoDTO organizationInfoDTO)
         {
             var organization = new Organization
             {
-                Id = organizationInfoDTO.Id,
+                Id = id,
                 Name = organizationInfoDTO.Name,
-               
+                YearOfFoundation = organizationInfoDTO.YearOfFoundation,
+                Description = organizationInfoDTO.Description
             };
 
             await _dbContext.Organizations.AddAsync(organization);
@@ -46,22 +47,22 @@ namespace Volunteer.BL.Services
             return await _dbContext.Organizations.FirstOrDefaultAsync(i => i.Id == id);
         }
 
-        public async Task<bool> UpdateOrganization(OrganizationInfoDTO organizationInfoDTO)
-        {
-            var organization = await _dbContext.Organizations.FindAsync(organizationInfoDTO.Id);
+        //public async Task<bool> UpdateOrganization(OrganizationInfoDTO organizationInfoDTO)
+        //{
+        //    var organization = await _dbContext.Organizations.FindAsync(organizationInfoDTO.Id);
 
-            if (organization == null)
-            {
-                return false;
-            }
+        //    if (organization == null)
+        //    {
+        //        return false;
+        //    }
 
-            organization.Name = organizationInfoDTO.Name;
+            //organization.Name = organizationInfoDTO.Name;
             //organization.YearOfFoundation = organizationInfoDTO.YearOfFoundation;
             //organization.Description = organizationInfoDTO.Description;
 
-            _dbContext.Organizations.Update(organization);
-            return await SaveChangesAsync();
-        }
+        //    _dbContext.Organizations.Update(organization);
+        //    return await SaveChangesAsync();
+        //}
 
         public async Task<bool> SaveChangesAsync()
             => await _dbContext.SaveChangesAsync() > 0;
