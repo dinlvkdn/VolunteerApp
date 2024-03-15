@@ -14,7 +14,6 @@ namespace Volunteer.DAL.DataAccess
         public DbSet<StatusHistory> StatusHistory { get; set; }
         public DbSet<Models.Volunteer> Volunteers { get; set; }
         public DbSet<VolunteerJobOffer> VolunteerJobOffers { get; set; }
-        public DbSet<User> Users { get; set; }
 
         public VolunteerDBContext()
         {
@@ -40,7 +39,6 @@ namespace Volunteer.DAL.DataAccess
             builder.ApplyConfiguration(new StatusHistoryConfiguration());
             builder.ApplyConfiguration(new VolunteerConfiguration());
             builder.ApplyConfiguration(new VolunteerJobOfferConfiguration());
-            builder.ApplyConfiguration(new UserConfiguration());
 
             base.OnModelCreating(builder);
         }

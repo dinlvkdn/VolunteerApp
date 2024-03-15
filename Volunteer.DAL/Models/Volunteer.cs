@@ -10,7 +10,5 @@
         public ICollection<Member> Members { get; set; }
         public Resume Resume { get; set; }
         public ICollection<VolunteerJobOffer> VolunteerJobOffers { get; set; }
-        public User User { get; set; }
-        public Guid UserId { get; set; }
     }
 }
