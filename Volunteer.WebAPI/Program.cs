@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Serilog;
 using System.Text;
 using Volunteer.BL.Helper.Exceptions;
 using Volunteer.BL.Helper.ValidatorsDTO;
@@ -105,6 +106,9 @@ namespace Volunteer.WebAPI
                 });
 
 
+            builder.Host.UseSerilog((context, configuration) =>
+                configuration.ReadFrom.Configuration(context.Configuration));
+
 
             var app = builder.Build();
 
@@ -127,6 +131,12 @@ namespace Volunteer.WebAPI
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+            else
+            {
+                app.UseExceptionHandler("/Error");
+            }
+
+            app.UseSerilogRequestLogging();
 
             app.UseHttpsRedirection();
 
