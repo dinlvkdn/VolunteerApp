@@ -22,6 +22,15 @@ namespace Volunteer.BL.Services
             try
            {
                 var resume = await _dbContext.Resumes.Where(f => f.FileName == FileName).FirstOrDefaultAsync();
+                if (resume == null)
+                {
+                    throw new ApiException()
+                    {
+                        StatusCode = StatusCodes.Status404NotFound,
+                        Title = "Can`t find resume",
+                        Detail = "Error occured while finding resume"
+                    };
+                }
                 var getResumePath = resume.FileUrl;
                 var provider = new FileExtensionContentTypeProvider();
                 if (!provider.TryGetContentType(getResumePath, out var contentType))
@@ -48,8 +57,19 @@ namespace Volunteer.BL.Services
             string FileName = "";
             try
             {
-
                 FileName = volunteerId.ToString();
+
+                var existingResume = await _dbContext.Resumes.FirstOrDefaultAsync(r => r.FileName == FileName);
+                if (existingResume != null)
+                {
+                    throw new ApiException()
+                    {
+                        StatusCode = StatusCodes.Status400BadRequest,
+                        Title = "File already Exists",
+                        Detail = "A file with the same name already exists in the database"
+                    };
+                }
+
                 var _getFilePath = GetFilePath(FileName);
 
                 using var _FileStream = new FileStream(_getFilePath, FileMode.Create);
