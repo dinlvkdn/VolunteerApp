@@ -25,6 +25,7 @@ namespace Volunteer.BL.Services
             };
 
             await _dbContext.Organizations.AddAsync(organization);
+
             await _dbContext.SaveChangesAsync();
 
             return organizationInfoDTO;
@@ -33,12 +34,9 @@ namespace Volunteer.BL.Services
         public async Task<bool> DeleteOrganization(Guid IdOrganization)
         {
             var organization = await GetOrganizationById(IdOrganization);
-            if (organization == null)
-            {
-                return false;
-            }
 
             _dbContext.Organizations.Remove(organization);
+
             return await SaveChangesAsync();
         }
 
@@ -47,22 +45,20 @@ namespace Volunteer.BL.Services
             return await _dbContext.Organizations.FirstOrDefaultAsync(i => i.Id == id);
         }
 
-        //public async Task<bool> UpdateOrganization(OrganizationInfoDTO organizationInfoDTO)
-        //{
-        //    var organization = await _dbContext.Organizations.FindAsync(organizationInfoDTO.Id);
+        public async Task<OrganizationInfoDTO> UpdateOrganization(Guid id, OrganizationInfoDTO organizationInfoDTO)
+        {
+            var organization = await GetOrganizationById(id);
 
-        //    if (organization == null)
-        //    {
-        //        return false;
-        //    }
+            organization.Name = organizationInfoDTO.Name;
+            organization.YearOfFoundation = organizationInfoDTO.YearOfFoundation;
+            organization.Description = organizationInfoDTO.Description;
 
-            //organization.Name = organizationInfoDTO.Name;
-            //organization.YearOfFoundation = organizationInfoDTO.YearOfFoundation;
-            //organization.Description = organizationInfoDTO.Description;
+            _dbContext.Organizations.Update(organization);
 
-        //    _dbContext.Organizations.Update(organization);
-        //    return await SaveChangesAsync();
-        //}
+            await _dbContext.SaveChangesAsync();
+
+            return organizationInfoDTO;
+        }
 
         public async Task<bool> SaveChangesAsync()
             => await _dbContext.SaveChangesAsync() > 0;

@@ -6,7 +6,7 @@ namespace Volunteer.BL.Interfaces
     public  interface IOrganizationService
     {
         Task<OrganizationInfoDTO> AddOrganization(Guid id,OrganizationInfoDTO organizationInfoDTO);
-        //Task<bool> UpdateOrganization(OrganizationInfoDTO organizationInfoDTO);
+        Task<OrganizationInfoDTO> UpdateOrganization(Guid id, OrganizationInfoDTO organizationInfoDTO);
         Task<bool> DeleteOrganization(Guid IdOrganization);
         Task<Organization> GetOrganizationById(Guid id);
     }

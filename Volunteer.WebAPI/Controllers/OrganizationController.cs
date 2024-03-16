@@ -78,29 +78,52 @@ namespace Volunteer.WebAPI.Controllers
             }
         }
 
-        //[HttpPut]
-        //public async Task<IActionResult> UpdateOrganization([FromBody] OrganizationInfoDTO organizationInfoDTO)
-        //{
-        //    if (!ModelState.IsValid)
-        //    {
-        //        return BadRequest(ModelState);
+        [HttpPut]
+        public async Task<IActionResult> UpdateOrganization([FromBody] OrganizationInfoDTO organizationInfoDTO)
+        {
+            Guid id;
 
-        //    }
+            try
+            {
+                id = Guid.Parse(HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
+            }
+            catch (Exception e)
+            {
+                throw new ApiException()
+                {
+                    StatusCode = StatusCodes.Status422UnprocessableEntity,
+                    Title = "Error parsing guid",
+                    Detail = "Error occured while parsing guid from volunteer claims"
+                };
+            }
 
-        //    var organizationToUpdate = await _organizationService.GetOrganizationById(organizationInfoDTO.Id);
-        //    if (organizationToUpdate == null)
-        //    {
-        //        return NotFound("Organization not found");
-        //    }
-        //    if (await _organizationService.UpdateOrganization(organizationInfoDTO))
-        //    {
-        //        return Ok();
-        //    }
-        //    else
-        //    {
-        //        return StatusCode(StatusCodes.Status500InternalServerError, "Failed to update organization");
-        //    }
-        //}
+            var organizationToUpdate = await _organizationService.GetOrganizationById(id);
+            
+            if (organizationToUpdate == null)
+            {
+                throw new ApiException()
+                {
+                    StatusCode = StatusCodes.Status404NotFound,
+                    Title = "Organization doesn't exist",
+                    Detail = "No organization on database"
+                };
+            }
+            var organization = await _organizationService.UpdateOrganization(id, organizationInfoDTO);
+            
+            if (organization == null)
+            {
+                throw new ApiException()
+                {
+                    StatusCode = StatusCodes.Status500InternalServerError,
+                    Title = "Organization doesn't update",
+                    Detail = "Failed to update organization"
+                };
+            }
+            else
+            {
+                return Ok(organization);
+            }
+        }
 
         [HttpGet("{IdOrganization:Guid}")]
         public async Task<IActionResult> GetOrganizationById([FromRoute] Guid IdOrganization)
