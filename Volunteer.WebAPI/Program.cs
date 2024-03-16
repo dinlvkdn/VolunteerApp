@@ -1,9 +1,11 @@
+using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
 using Volunteer.BL.Helper.Exceptions;
+using Volunteer.BL.Helper.ValidatorsDTO;
 using Volunteer.BL.Interfaces;
 using Volunteer.BL.Services;
 
@@ -23,6 +25,9 @@ namespace Volunteer.WebAPI
             {
                 options.Filters.Add(typeof(ExceptionResponseFilter));
             });
+
+            builder.Services.AddValidatorsFromAssemblyContaining<VolunteerInfoDTOValidator>();
+            builder.Services.AddValidatorsFromAssemblyContaining<VolunteerShortInfoDTOValidator>();
 
             builder.Services.AddScoped<IJobOfferService,JobOfferService>();
             builder.Services.AddScoped<IVolunteerService, VolunteerService>();
