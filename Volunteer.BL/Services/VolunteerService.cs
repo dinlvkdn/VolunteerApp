@@ -35,10 +35,6 @@ namespace Volunteer.BL.Services
         public async Task<bool> DeleteVolunteer(Guid volunteerId)
         {
             var volunteer = await GetVolunteerById(volunteerId);
-            if (volunteer == null)
-            {
-                return false;
-            }
 
             _dbContext.Volunteers.Remove(volunteer);
 
