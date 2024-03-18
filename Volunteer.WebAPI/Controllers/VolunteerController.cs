@@ -54,7 +54,7 @@ namespace Volunteer.WebAPI.Controllers
         }
 
 
-        [HttpDelete("{volunteerId:Guid}")]
+        [HttpDelete("{id:Guid}")]
         public async Task<IActionResult> DeleteVolunteer([FromRoute] Guid id)
         {
             await guidValidationService.CheckForEmptyGuid(id);

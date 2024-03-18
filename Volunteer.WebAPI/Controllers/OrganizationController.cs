@@ -50,7 +50,7 @@ namespace Volunteer.WebAPI.Controllers
             }
         }
 
-        [HttpDelete("{IdOrganization:Guid}")]
+        [HttpDelete("{id:Guid}")]
         public async Task<IActionResult> DeleteOrganization([FromRoute] Guid id)
         {
             await guidValidationService.CheckForEmptyGuid(id);
@@ -110,7 +110,7 @@ namespace Volunteer.WebAPI.Controllers
             }
         }
 
-        [HttpGet("{IdOrganization:Guid}")]
+        [HttpGet("{id:Guid}")]
         public async Task<IActionResult> GetOrganizationById([FromRoute] Guid id)
         {
             await guidValidationService.CheckForEmptyGuid(id);

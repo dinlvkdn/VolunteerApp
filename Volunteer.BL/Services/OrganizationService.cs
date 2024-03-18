@@ -16,6 +16,7 @@ namespace Volunteer.BL.Services
         }
         public async Task<OrganizationInfoDTO> AddOrganization(Guid id,OrganizationInfoDTO organizationInfoDTO)
         {
+
             var organization = new Organization
             {
                 Id = id,

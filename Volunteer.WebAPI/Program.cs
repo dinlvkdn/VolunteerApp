@@ -29,7 +29,9 @@ namespace Volunteer.WebAPI
             });
 
             builder.Services.AddFluentValidationAutoValidation();
+            builder.Services.AddValidatorsFromAssemblyContaining<OrganizationInfoDTOValidator>();
             builder.Services.AddValidatorsFromAssemblyContaining<VolunteerInfoDTOValidator>();
+            builder.Services.AddValidatorsFromAssemblyContaining<VolunteerShortInfoDTOValidator>();
 
             builder.Services.AddScoped<IJobOfferService,JobOfferService>();
             builder.Services.AddScoped<IVolunteerService, VolunteerService>();
