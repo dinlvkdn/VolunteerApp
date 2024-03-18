@@ -34,7 +34,8 @@ namespace Volunteer.WebAPI
             builder.Services.AddScoped<IJobOfferService,JobOfferService>();
             builder.Services.AddScoped<IVolunteerService, VolunteerService>();
             builder.Services.AddScoped<IOrganizationService, OrganizationService>();
-            
+            builder.Services.AddScoped<IGuidValidationService, GuidValidationService>();
+
 
             builder.Services.AddTransient<IResumeService, ResumeService>();
 

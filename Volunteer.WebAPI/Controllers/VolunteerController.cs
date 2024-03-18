@@ -15,11 +15,14 @@ namespace Volunteer.WebAPI.Controllers
     {
         private readonly IVolunteerService volunteerService;
         private readonly IResumeService resumeService;
+        private readonly IGuidValidationService guidValidationService;
 
-        public VolunteerController(IVolunteerService volunteerService, IResumeService resumeService)
+
+        public VolunteerController(IVolunteerService volunteerService, IResumeService resumeService, IGuidValidationService guidValidationService)
         {
             this.volunteerService = volunteerService;
             this.resumeService = resumeService;
+            this.guidValidationService = guidValidationService;
         }
 
         [HttpPost]
@@ -31,21 +34,7 @@ namespace Volunteer.WebAPI.Controllers
                 return BadRequest();
             }
 
-            Guid id;
-            try
-            {
-                 id = Guid.Parse(HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
-            }
-            catch (Exception)
-            {
-                throw new ApiException()
-                {
-                    StatusCode = StatusCodes.Status422UnprocessableEntity,
-                    Title = "Error parsing guid",
-                    Detail = "Error occured while parsing guid from volunteer claims"
-                };
-            }
-
+            var id = await guidValidationService.GetIdFromClaims(HttpContext.User);
 
             var createVolunteer = await volunteerService.AddVolunteer(id, volunteerInfoDTO);
 
@@ -66,19 +55,11 @@ namespace Volunteer.WebAPI.Controllers
 
 
         [HttpDelete("{volunteerId:Guid}")]
-        public async Task<IActionResult> DeleteVolunteer([FromRoute] Guid volunteerId)
+        public async Task<IActionResult> DeleteVolunteer([FromRoute] Guid id)
         {
-            if (volunteerId == Guid.Empty)
-            {
-                throw new ApiException()
-                {
-                    StatusCode = StatusCodes.Status400BadRequest,
-                    Title = "Invalid guid",
-                    Detail = "Guid does not exist"
-                };
-            }
+            await guidValidationService.CheckForEmptyGuid(id);
 
-            var volunteer = await volunteerService.GetVolunteerById(volunteerId);
+            var volunteer = await volunteerService.GetVolunteerById(id);
 
             if (volunteer == null)
             {
@@ -90,7 +71,7 @@ namespace Volunteer.WebAPI.Controllers
                 };
             }
 
-            if (await volunteerService.DeleteVolunteer(volunteerId))
+            if (await volunteerService.DeleteVolunteer(id))
             {
                 return Ok("Volunteer is deleted");
             }
@@ -109,26 +90,12 @@ namespace Volunteer.WebAPI.Controllers
         [HttpPut]
         public async Task<IActionResult> UpdateVolunteer([FromBody] VolunteerShortInfoDTO volunteerDTO)
         {
-            Guid id;
-
             if (!ModelState.IsValid)
             {
                 return BadRequest();
             }
 
-            try
-            {
-                id = Guid.Parse(HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
-            }
-            catch (Exception e)
-            {
-                throw new ApiException()
-                {
-                    StatusCode = StatusCodes.Status422UnprocessableEntity,
-                    Title = "Error parsing guid",
-                    Detail = "Error occured while parsing guid from volunteer claims"
-                };
-            }
+            var id = await guidValidationService.GetIdFromClaims(HttpContext.User);
 
             var volunteerToUpdate = await volunteerService.GetVolunteerById(id);
 
@@ -162,21 +129,7 @@ namespace Volunteer.WebAPI.Controllers
         [HttpGet]
         public async Task<IActionResult> GetVolunteerById()
         {
-            Guid id;
-
-            try
-            {
-                id = Guid.Parse(HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
-            }
-            catch (Exception e)
-            {
-                throw new ApiException()
-                {
-                    StatusCode = StatusCodes.Status422UnprocessableEntity,
-                    Title = "Error parsing guid",
-                    Detail = "Error occured while parsing guid from volunteer claims"
-                };
-            }
+            var id = await guidValidationService.GetIdFromClaims(HttpContext.User);
 
             var volunteer = await volunteerService.GetVolunteerById(id);
 
@@ -196,22 +149,9 @@ namespace Volunteer.WebAPI.Controllers
         [HttpPost("uploadResume")]
         public async Task<IActionResult> UploadResume(IFormFile file)
         {
-            Guid volunteerId;
-            try
-            {
-                volunteerId = Guid.Parse(HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
-            }
-            catch (Exception e)
-            {
-                throw new ApiException()
-                {
-                    StatusCode = StatusCodes.Status422UnprocessableEntity,
-                    Title = "Error parsing guid",
-                    Detail = "Error occured while parsing guid from volunteer claims"
-                };
-            }
+            var id = await guidValidationService.GetIdFromClaims(HttpContext.User);
 
-            var result = await resumeService.UploadResume(file, volunteerId);
+            var result = await resumeService.UploadResume(file, id);
             return Ok(result);
         }
 

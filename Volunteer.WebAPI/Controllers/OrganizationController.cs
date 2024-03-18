@@ -14,30 +14,24 @@ namespace Volunteer.WebAPI.Controllers
     public class OrganizationController : ControllerBase
     {
         private readonly IOrganizationService _organizationService;
+        private readonly IGuidValidationService guidValidationService;
 
-        public OrganizationController(IOrganizationService organizationService)
+        public OrganizationController(IOrganizationService organizationService, IGuidValidationService guidValidationService)
         {
             _organizationService = organizationService;
+            this.guidValidationService = guidValidationService;
         }
 
 
         [HttpPost]
         public async Task<IActionResult> AddOrganization(OrganizationInfoDTO organizationInfoDTO)
         {
-            Guid id;
-            try
+            if (!ModelState.IsValid)
             {
-                id = Guid.Parse(HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
+                return BadRequest();
             }
-            catch (Exception e)
-            {
-                throw new ApiException()
-                {
-                    StatusCode = StatusCodes.Status422UnprocessableEntity,
-                    Title = "Error parsing guid",
-                    Detail = "Error occured while parsing guid from organization claims"
-                };
-            }
+
+            var id = await guidValidationService.GetIdFromClaims(HttpContext.User);
 
             var existingOrganization = await _organizationService.AddOrganization(id, organizationInfoDTO);
 
@@ -57,18 +51,18 @@ namespace Volunteer.WebAPI.Controllers
         }
 
         [HttpDelete("{IdOrganization:Guid}")]
-        public async Task<IActionResult> DeleteOrganization([FromRoute] Guid IdOrganization)
+        public async Task<IActionResult> DeleteOrganization([FromRoute] Guid id)
         {
-            if (IdOrganization == Guid.Empty)
-            {
-                return BadRequest("Id does not exist");
-            }
-            var organization = await _organizationService.GetOrganizationById(IdOrganization);
+            await guidValidationService.CheckForEmptyGuid(id);
+
+            var organization = await _organizationService.GetOrganizationById(id);
+
             if (organization == null)
             {
                 return NotFound("No organization found");
             }
-            if (await _organizationService.DeleteOrganization(IdOrganization))
+
+            if (await _organizationService.DeleteOrganization(id))
             {
                 return Ok();
             }
@@ -81,21 +75,12 @@ namespace Volunteer.WebAPI.Controllers
         [HttpPut]
         public async Task<IActionResult> UpdateOrganization([FromBody] OrganizationInfoDTO organizationInfoDTO)
         {
-            Guid id;
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
 
-            try
-            {
-                id = Guid.Parse(HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
-            }
-            catch (Exception e)
-            {
-                throw new ApiException()
-                {
-                    StatusCode = StatusCodes.Status422UnprocessableEntity,
-                    Title = "Error parsing guid",
-                    Detail = "Error occured while parsing guid from volunteer claims"
-                };
-            }
+            var id = await guidValidationService.GetIdFromClaims(HttpContext.User);
 
             var organizationToUpdate = await _organizationService.GetOrganizationById(id);
             
@@ -126,13 +111,12 @@ namespace Volunteer.WebAPI.Controllers
         }
 
         [HttpGet("{IdOrganization:Guid}")]
-        public async Task<IActionResult> GetOrganizationById([FromRoute] Guid IdOrganization)
+        public async Task<IActionResult> GetOrganizationById([FromRoute] Guid id)
         {
-            if (IdOrganization == Guid.Empty)
-            {
-                return BadRequest("Id does not exist");
-            }
-            var organization = await _organizationService.GetOrganizationById(IdOrganization);
+            await guidValidationService.CheckForEmptyGuid(id);
+
+            var organization = await _organizationService.GetOrganizationById(id);
+
             if (organization == null)
             {
                 return NotFound("No organization found");
