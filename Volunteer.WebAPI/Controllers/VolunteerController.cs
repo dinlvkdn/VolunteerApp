@@ -26,12 +26,17 @@ namespace Volunteer.WebAPI.Controllers
         
         public async Task<IActionResult> AdditionVolunteer(VolunteerInfoDTO volunteerInfoDTO)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
+
             Guid id;
             try
             {
                  id = Guid.Parse(HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 throw new ApiException()
                 {
@@ -105,6 +110,11 @@ namespace Volunteer.WebAPI.Controllers
         public async Task<IActionResult> UpdateVolunteer([FromBody] VolunteerShortInfoDTO volunteerDTO)
         {
             Guid id;
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
 
             try
             {
