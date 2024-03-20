@@ -77,7 +77,6 @@ namespace Volunteer.WebAPI.Controllers
             }
             else
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Volunteer is not deleted");
                 throw new ApiException()
                 {
                     StatusCode = StatusCodes.Status500InternalServerError,

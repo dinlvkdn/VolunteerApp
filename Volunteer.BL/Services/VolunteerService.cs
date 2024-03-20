@@ -1,5 +1,7 @@
 ﻿using Domain.DTOs;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Volunteer.BL.Helper.Exceptions;
 using Volunteer.BL.Interfaces;
 using Volunteer.DAL.DataAccess;
 using Volunteer.DAL.Models;
@@ -17,6 +19,17 @@ namespace Volunteer.BL.Services
 
         public async Task<VolunteerInfoDTO> AddVolunteer(Guid id,VolunteerInfoDTO volunteerDTO)
         {
+            var volunteerExists = await GetVolunteerById(id);
+            if(volunteerExists != null)
+            {
+                throw new ApiException()
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    Title = "Volunteer already exists",
+                    Detail = "A volunteer with this id already exists"
+                };
+            }
+
             var volunteer = new DAL.Models.Volunteer
             {
                 Id = id,
