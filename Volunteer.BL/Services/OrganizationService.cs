@@ -1,5 +1,7 @@
 ﻿using Domain.DTOs;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Volunteer.BL.Helper.Exceptions;
 using Volunteer.BL.Interfaces;
 using Volunteer.DAL.DataAccess;
 using Volunteer.DAL.Models;
@@ -16,6 +18,16 @@ namespace Volunteer.BL.Services
         }
         public async Task<OrganizationInfoDTO> AddOrganization(Guid id,OrganizationInfoDTO organizationInfoDTO)
         {
+            var organizationExists = await GetOrganizationById(id);
+            if (organizationExists != null)
+            {
+                throw new ApiException()
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    Title = "Organization already exists",
+                    Detail = "A organization with this id already exists"
+                };
+            }
 
             var organization = new Organization
             {
