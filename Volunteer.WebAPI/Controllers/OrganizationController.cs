@@ -1,10 +1,8 @@
 ﻿using Domain.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using Volunteer.BL.Helper.Exceptions;
 using Volunteer.BL.Interfaces;
-using Volunteer.BL.Services;
 
 namespace Volunteer.WebAPI.Controllers
 {
@@ -110,16 +108,21 @@ namespace Volunteer.WebAPI.Controllers
             }
         }
 
-        [HttpGet("{id:Guid}")]
-        public async Task<IActionResult> GetOrganizationById([FromRoute] Guid id)
+        [HttpGet]
+        public async Task<IActionResult> GetOrganizationById()
         {
-            await guidValidationService.CheckForEmptyGuid(id);
+            var id = await guidValidationService.GetIdFromClaims(HttpContext.User);
 
             var organization = await _organizationService.GetOrganizationById(id);
 
             if (organization == null)
             {
-                return NotFound("No organization found");
+                throw new ApiException()
+                {
+                    StatusCode = StatusCodes.Status404NotFound,
+                    Title = "Organization doesn't exist",
+                    Detail = "No organization on database"
+                };
             }
 
             return Ok(organization);

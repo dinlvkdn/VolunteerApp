@@ -45,8 +45,8 @@ namespace Volunteer.WebAPI.Controllers
             }
             else if (roleName == "Organization")
             {
-                //return Redirect($"/api/Volunteer/GetVolunteerById/{Id}");
-                return Redirect($"/api/Organization/{Id}");
+                //return Redirect($"/api/Organization/GetOrganizationById/{Id}");
+                return Redirect($"/api/Organization");
             }
 
             return BadRequest();
