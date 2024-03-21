@@ -1,40 +1,52 @@
 ﻿using Domain.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Volunteer.BL.Helper.Exceptions;
 using Volunteer.BL.Interfaces;
 
 namespace Volunteer.WebAPI.Controllers
 {
+    [Route("api/[controller]")]
+    [ApiController]
     public class JobOfferController : ControllerBase
     {
         private readonly IJobOfferService jobOfferService;
+        private readonly ICurrentUserService currentUserService;
 
-        public JobOfferController(IJobOfferService jobOfferService)
+        public JobOfferController(IJobOfferService jobOfferService, ICurrentUserService currentUserService)
         {
             this.jobOfferService = jobOfferService;
+            this.currentUserService = currentUserService;
         }
-        [HttpPost]
+        [Authorize(Roles = "Organization")]
+        [HttpPost("createJobOffer")]
         public async Task<IActionResult> CreateJobOffer([FromBody] JobOfferInfoDTO jobOfferInfoDTO)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
+            }
 
-            }
-            if (jobOfferInfoDTO == null)
+            var organizationId = currentUserService.GetIdFromClaims(HttpContext.User);
+            var createJobOffer = await jobOfferService.CreateJobOffer(organizationId, jobOfferInfoDTO);
+
+
+            if (createJobOffer != null)
             {
-                return BadRequest("Object is invalid or empty");
-            }
-            if (await jobOfferService.CreateJobOffer(jobOfferInfoDTO))
-            {
-                return Ok();    
+                return Ok(createJobOffer);
             }
             else
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Job offer not added");
+                throw new ApiException()
+                {
+                    StatusCode = StatusCodes.Status500InternalServerError,
+                    Title = "Job offer not added",
+                    Detail = "Job offer not added"
+                };
             }
         }
-
-        [HttpPut]
+        [Authorize(Roles = "Organization")]
+        [HttpPut("updateJobOffer")]
         public async Task<IActionResult> UpdateJobOffer([FromBody] JobOfferInfoDTO jobOfferInfoDTO)
         {
             if (!ModelState.IsValid)
@@ -42,20 +54,52 @@ namespace Volunteer.WebAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            if (jobOfferInfoDTO == null)
+            var updateJobOffer = await jobOfferService.UpdateJobOffer(jobOfferInfoDTO);
+
+            if (updateJobOffer != null)
             {
-                return BadRequest("Object is invalid or empty");
-            }
-            if( await jobOfferService.UpdateJobOffer(jobOfferInfoDTO))
-            {
-                return Ok();
+                return Ok(updateJobOffer);
             }
             else
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Failed to update job offer");
+                throw new ApiException()
+                {
+                    StatusCode = StatusCodes.Status500InternalServerError,
+                    Title = "Failed to change jobOffer",
+                    Detail = "Failed to change jobOffer"
+                };
             }
         }
 
+        [Authorize(Roles = "Organization, Volunteer")]
+        [HttpGet("{id:Guid}")]
+        public async Task<IActionResult> GetJobOfferInfo([FromRoute] Guid id)
+        {
+            var jobOffer = await jobOfferService.GetGobOfferInfo(id);
+
+            return Ok(jobOffer);
+        }
+
+        [Authorize(Roles = "Organization")]
+        [HttpDelete("{id:Guid}")]
+        public async Task<IActionResult> DeleteJobOfferById([FromRoute] Guid id)
+        {
+            if (await jobOfferService.DeleteJobOfferById(id))
+            {
+                return Ok("JobOffer is deleted");
+            }
+            else
+            {
+                throw new ApiException()
+                {
+                    StatusCode = StatusCodes.Status500InternalServerError,
+                    Title = "JobOffer is not deleted",
+                    Detail = "Error occured while deleting jobOffer on server"
+                };
+            }
+        }
+
+        [Authorize(Roles = "Volunteer")]
         [HttpGet]
         public async Task<IActionResult> GetAllJobOffers()
         {
@@ -70,42 +114,6 @@ namespace Volunteer.WebAPI.Controllers
 
                     "Error retrieving data from the database");
             }
-        }
-
-        [HttpGet("{id:guid}")]
-        public async Task<IActionResult> GetGobOfferById([FromRoute]Guid id)
-        {
-            if (id == Guid.Empty) return BadRequest("Id does not exist");
-
-            var jobOffer = await jobOfferService.GetGobOfferById(id);
-            if(jobOffer != null)
-            {
-                return Ok(id);
-            }
-            else
-            {
-                return NotFound("No job offer found");
-            }
-        }
-
-        [HttpDelete("{id:Guid}")]
-        public async Task<IActionResult> DeleteJobOfferById([FromRoute] Guid id)
-        {
-            if (id == Guid.Empty) return BadRequest("Id does not exist");
-
-            var jobOffer = await jobOfferService.GetGobOfferById(id);
-            if (jobOffer == null)
-            {
-                return NotFound("No job offer found");
-            }
-            if (await jobOfferService.DeleteJobOfferById(id))
-            {
-                return Ok();
-            }
-            else
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Job offer is not deleted");
-            }
-        }
+        }  
     }
 }

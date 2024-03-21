@@ -5,11 +5,12 @@ namespace Volunteer.BL.Interfaces
 {
     public interface IJobOfferService
     {
-        Task<bool> CreateJobOffer(JobOfferInfoDTO jobOfferInfoDTO);
+        Task<JobOfferInfoDTO> CreateJobOffer(Guid id,JobOfferInfoDTO jobOfferInfoDTO);
         Task<List<JobOffer>> GetAllJobOffers();
+        Task<JobOfferInfoDTO> GetGobOfferInfo(Guid id);
         Task<JobOffer> GetGobOfferById(Guid id);
-        Task <bool> UpdateJobOffer(JobOfferInfoDTO jobOfferInfoDTO);
+        Task <JobOfferInfoDTO> UpdateJobOffer(JobOfferInfoDTO jobOfferInfoDTO);
         Task <bool> DeleteJobOfferById(Guid id);
-        
+        Task<List<AllRequestFromVolunteerDTO>> GetAllRequestFromVolunteer(Guid organizationId, Guid jobOfferId);
     }
 }

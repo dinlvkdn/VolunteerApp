@@ -1,4 +1,5 @@
-﻿using Domain.DTOs;
+﻿using Domain;
+using Domain.DTOs;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Volunteer.BL.Helper.Exceptions;
@@ -48,6 +49,15 @@ namespace Volunteer.BL.Services
         {
             var organization = await GetOrganizationById(IdOrganization);
 
+            if (organization == null)
+            {
+                throw new ApiException()
+                {
+                    StatusCode = StatusCodes.Status404NotFound,
+                    Title = "No organization exists",
+                    Detail = "Organization does`n exist in the database"
+                };
+            }
             _dbContext.Organizations.Remove(organization);
 
             return await SaveChangesAsync();
@@ -56,6 +66,26 @@ namespace Volunteer.BL.Services
         public async Task<Organization> GetOrganizationById(Guid id)
         {
             return await _dbContext.Organizations.FirstOrDefaultAsync(i => i.Id == id);
+        }
+
+        public async Task<OrganizationInfoDTO> GetOrganizationInfo(Guid id)
+        {
+            var  organization = await GetOrganizationById(id);
+            if (organization == null)
+            {
+                throw new ApiException()
+                {
+                    StatusCode = StatusCodes.Status404NotFound,
+                    Title = "No organization exists",
+                    Detail = "Organiztion does`n exist in the database"
+                };
+            }
+            return new OrganizationInfoDTO
+            {
+                Description = organization.Description,
+                Name = organization.Name,
+                YearOfFoundation = organization.YearOfFoundation
+            };
         }
 
         public async Task<OrganizationInfoDTO> UpdateOrganization(Guid id, OrganizationInfoDTO organizationInfoDTO)
@@ -75,5 +105,27 @@ namespace Volunteer.BL.Services
 
         public async Task<bool> SaveChangesAsync()
             => await _dbContext.SaveChangesAsync() > 0;
+
+        public async Task<bool> ConfirmVolunteerOnJobOffer(Guid jobOfferId, Guid volunteerId)
+        {
+            var requestForJobOffer = await _dbContext.VolunteerJobOffers.FirstOrDefaultAsync(i => i.JobOfferId == jobOfferId && i.VolunteerId == volunteerId);
+
+            //requestForJobOffer.Status = "confirm";
+            requestForJobOffer.Status = StatusRequest.confirm;
+
+            _dbContext.VolunteerJobOffers.Update(requestForJobOffer);
+            return await SaveChangesAsync();
+        }
+
+        public async Task<bool> CancelVolunteerJobOfferRequest(Guid jobOfferId, Guid volunteerId)
+        {
+            var requestForJobOffer = await _dbContext.VolunteerJobOffers.FirstOrDefaultAsync(i => i.JobOfferId == jobOfferId && i.VolunteerId == volunteerId);
+
+            //requestForJobOffer.Status = "rejected";
+            requestForJobOffer.Status = StatusRequest.rejected;
+
+            _dbContext.VolunteerJobOffers.Update(requestForJobOffer);
+            return await SaveChangesAsync();
+        }
     }
 }

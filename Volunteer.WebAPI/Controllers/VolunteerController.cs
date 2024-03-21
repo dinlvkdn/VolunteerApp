@@ -1,32 +1,30 @@
 ﻿using Domain.DTOs;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using Volunteer.BL.Helper.Exceptions;
 using Volunteer.BL.Interfaces;
 
 namespace Volunteer.WebAPI.Controllers
 {
-    [Route("api/[controller]/[action]")]
+    [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles ="Volunteer")]
+    [Authorize(Roles = "Volunteer")]
     public class VolunteerController : ControllerBase
     {
         private readonly IVolunteerService volunteerService;
         private readonly IResumeService resumeService;
-        private readonly IGuidValidationService guidValidationService;
+        private readonly ICurrentUserService currentUserService;
 
 
-        public VolunteerController(IVolunteerService volunteerService, IResumeService resumeService, IGuidValidationService guidValidationService)
+        public VolunteerController(IVolunteerService volunteerService, IResumeService resumeService, ICurrentUserService currentUserService)
         {
             this.volunteerService = volunteerService;
             this.resumeService = resumeService;
-            this.guidValidationService = guidValidationService;
+            this.currentUserService = currentUserService;
         }
 
-        [HttpPost]
-        
+        [HttpPost("addVolunteer")]
+
         public async Task<IActionResult> AdditionVolunteer(VolunteerInfoDTO volunteerInfoDTO)
         {
             if (!ModelState.IsValid)
@@ -34,7 +32,7 @@ namespace Volunteer.WebAPI.Controllers
                 return BadRequest();
             }
 
-            var id = await guidValidationService.GetIdFromClaims(HttpContext.User);
+            var id = currentUserService.GetIdFromClaims(HttpContext.User);
 
             var createVolunteer = await volunteerService.AddVolunteer(id, volunteerInfoDTO);
 
@@ -46,47 +44,41 @@ namespace Volunteer.WebAPI.Controllers
             {
                 throw new ApiException()
                 {
-                    StatusCode = StatusCodes.Status404NotFound,
-                    Title = "Volunteer doesn't exist",
-                    Detail = "Volunteer doesn't exist while creating volunteer"
-                };
-            }
-        }
-
-
-        [HttpDelete("{id:Guid}")]
-        public async Task<IActionResult> DeleteVolunteer([FromRoute] Guid id)
-        {
-            await guidValidationService.CheckForEmptyGuid(id);
-
-            var volunteer = await volunteerService.GetVolunteerById(id);
-
-            if (volunteer == null)
-            {
-                throw new ApiException()
-                {
-                    StatusCode = StatusCodes.Status404NotFound,
-                    Title = "No volunteer exists",
-                    Detail = "Volunteer does`n exist in the database"
-                };
-            }
-
-            if (await volunteerService.DeleteVolunteer(id))
-            {
-                return Ok("Volunteer is deleted");
-            }
-            else
-            {
-                throw new ApiException()
-                {
                     StatusCode = StatusCodes.Status500InternalServerError,
-                    Title = "Volunteer is not deleted",
-                    Detail = "Error occured while deleting volunteer on server"
+                    Title = "Could not add volunteer",
+                    Detail = "Could not add volunteer"
                 };
             }
         }
 
-        [HttpPut]
+
+        [HttpDelete("delete")]
+        public async Task<IActionResult> DeleteVolunteer()
+        {
+            var id = currentUserService.GetIdFromClaims(HttpContext.User);
+            var auth = Request.Headers.Authorization;
+            using var client = new HttpClient();
+
+            client.DefaultRequestHeaders.Add("Authorization", auth.ToString());
+            //var response = await client.DeleteAsync($"http://localhost:5244/api/User?userId={id}");
+            var response = await client.DeleteAsync($"{Constants.ngrok}/api/User?userId={id}");
+            if (response.IsSuccessStatusCode)
+            {
+                if (await volunteerService.DeleteVolunteer(id))
+                {
+                    return Ok("Volunteer is deleted");
+                }
+            }
+
+            throw new ApiException()
+            {
+                StatusCode = StatusCodes.Status500InternalServerError,
+                Title = "Volunteer is not deleted",
+                Detail = "Error occured while deleting volunteer on server"
+            };
+        }
+
+        [HttpPut("update")]
         public async Task<IActionResult> UpdateVolunteer([FromBody] VolunteerShortInfoDTO volunteerDTO)
         {
             if (!ModelState.IsValid)
@@ -94,9 +86,9 @@ namespace Volunteer.WebAPI.Controllers
                 return BadRequest();
             }
 
-            var id = await guidValidationService.GetIdFromClaims(HttpContext.User);
+            var id = currentUserService.GetIdFromClaims(HttpContext.User);
 
-            var volunteerToUpdate = await volunteerService.GetVolunteerById(id);
+            var volunteerToUpdate = await volunteerService.GetVolunteerInfo(id);
 
             if (volunteerToUpdate == null)
             {
@@ -125,12 +117,12 @@ namespace Volunteer.WebAPI.Controllers
             }
         }
 
-        [HttpGet]
+        [HttpGet("get")]
         public async Task<IActionResult> GetVolunteerById()
         {
-            var id = await guidValidationService.GetIdFromClaims(HttpContext.User);
+            var id = currentUserService.GetIdFromClaims(HttpContext.User);
 
-            var volunteer = await volunteerService.GetVolunteerById(id);
+            var volunteer = await volunteerService.GetVolunteerInfo(id);
 
             if (volunteer == null)
             {
@@ -144,22 +136,39 @@ namespace Volunteer.WebAPI.Controllers
 
             return Ok(volunteer);
         }
-  
+
         [HttpPost("uploadResume")]
         public async Task<IActionResult> UploadResume(IFormFile file)
         {
-            var id = await guidValidationService.GetIdFromClaims(HttpContext.User);
+            var id = currentUserService.GetIdFromClaims(HttpContext.User);
 
             var result = await resumeService.UploadResume(file, id);
             return Ok(result);
         }
 
-
-        [HttpGet("downloadResume")]
-        public async Task<IActionResult> DownloadResume([FromQuery] string fileName)
+        [HttpPost("sendRequestForJobOffer")]
+        public async Task<IActionResult> SendRequestForJobOffer([FromBody] RequestForJobOfferDTO requestForJobOfferDTO)
         {
-            var result = await resumeService.DownloadResume(fileName);
-            return File(result.Item1, result.Item2, result.Item3);
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
+
+            var volunteerId = currentUserService.GetIdFromClaims(HttpContext.User);
+
+            var sendRequestForJobOffer = await volunteerService.SendRequestForJobOffer(volunteerId, requestForJobOfferDTO);
+
+            if (sendRequestForJobOffer)
+            {
+                return Ok("Successfully sent a request to job offer");
+            }
+            
+            throw new ApiException()
+            {
+                StatusCode = StatusCodes.Status500InternalServerError,
+                Title = "Failed to send request to job offer",
+                Detail = "Failed to send request to job offer"
+            };
         }
     }
 }

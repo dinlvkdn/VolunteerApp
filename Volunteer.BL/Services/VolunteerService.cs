@@ -1,4 +1,5 @@
-﻿using Domain.DTOs;
+﻿using Domain;
+using Domain.DTOs;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Volunteer.BL.Helper.Exceptions;
@@ -49,6 +50,16 @@ namespace Volunteer.BL.Services
         {
             var volunteer = await GetVolunteerById(volunteerId);
 
+            if (volunteer == null)
+            {
+                throw new ApiException()
+                {
+                    StatusCode = StatusCodes.Status404NotFound,
+                    Title = "No volunteer exists",
+                    Detail = "Volunteer does`n exist in the database"
+                };
+            }
+
             _dbContext.Volunteers.Remove(volunteer);
 
             return await SaveChangesAsync();
@@ -59,9 +70,32 @@ namespace Volunteer.BL.Services
             return await _dbContext.Volunteers.FirstOrDefaultAsync(i => i.Id == id);
         }
 
+        public async Task<VolunteerInfoDTO> GetVolunteerInfo(Guid id)
+        {
+            var volunteer = await GetVolunteerById(id);
+            if (volunteer == null)
+            {
+                throw new ApiException()
+                {
+                    StatusCode = StatusCodes.Status404NotFound,
+                    Title = "No volunteer exists",
+                    Detail = "Volunteer does`n exist in the database"
+                };
+            }
+            return new VolunteerInfoDTO
+            {
+                DateOfBirth = volunteer.DateOfBirth,
+                FirstName = volunteer.FirstName,
+                LastName = volunteer.LastName,
+                Description = volunteer.Description
+            };
+        }
+
+
         public async Task<VolunteerShortInfoDTO> UpdateVolunteer(Guid  id, VolunteerShortInfoDTO volunteerDTO)
         {
             var volunteer = await GetVolunteerById(id);
+
 
             volunteer.FirstName = volunteerDTO.FirstName;
             volunteer.LastName = volunteerDTO.LastName;
@@ -76,5 +110,20 @@ namespace Volunteer.BL.Services
 
         public async Task<bool> SaveChangesAsync()
             => await _dbContext.SaveChangesAsync() > 0;
+
+        public async Task<bool> SendRequestForJobOffer(Guid volunteerId, RequestForJobOfferDTO requestForJobOfferDTO)
+        {
+      
+
+            var requestForJobOffer = new VolunteerJobOffer
+            {
+                //Status = "unapprove",
+                Status = StatusRequest.unapprove,
+                JobOfferId = requestForJobOfferDTO.JobOfferId,
+                VolunteerId = volunteerId
+            };
+            await _dbContext.VolunteerJobOffers.AddAsync(requestForJobOffer);
+            return await SaveChangesAsync();
+        }
     }
 }
