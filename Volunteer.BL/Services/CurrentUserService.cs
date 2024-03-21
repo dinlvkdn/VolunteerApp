@@ -5,9 +5,9 @@ using Volunteer.BL.Interfaces;
 
 namespace Volunteer.BL.Services
 {
-    public class GuidValidationService : IGuidValidationService
+    public class CurrentUserService : ICurrentUserService
     {
-        public async Task<Guid> GetIdFromClaims(ClaimsPrincipal user)
+        public Guid GetIdFromClaims(ClaimsPrincipal user)
         {
             var id = user.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(id))
@@ -31,19 +31,6 @@ namespace Volunteer.BL.Services
             }
 
             return userId;
-        }
-
-        public async Task CheckForEmptyGuid(Guid id)
-        {
-            if (id == Guid.Empty)
-            {
-                throw new ApiException()
-                {
-                    StatusCode = StatusCodes.Status400BadRequest,
-                    Title = "Invalid guid",
-                    Detail = "Guid does not exist"
-                };
-            }
         }
     }
 }
