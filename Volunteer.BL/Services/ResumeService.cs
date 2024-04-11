@@ -65,7 +65,7 @@ namespace Volunteer.BL.Services
                     throw new ApiException()
                     {
                         StatusCode = StatusCodes.Status400BadRequest,
-                        Title = "File already Exists",
+                        Title = "File already exists",
                         Detail = "A file with the same name already exists in the database"
                     };
                 }
@@ -92,7 +92,7 @@ namespace Volunteer.BL.Services
                 throw new ApiException()
                 {
                     StatusCode = StatusCodes.Status500InternalServerError,
-                    Title = "Can't upload image",
+                    Title = "Can't upload file",
                     Detail = "Error occured while uploading file on server"
                 };
             }

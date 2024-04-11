@@ -50,7 +50,14 @@ namespace Volunteer.WebAPI.Controllers
                 };
             }
         }
-
+            
+        [HttpPost("uploadResume")]
+        public async Task<IActionResult> UploadResume([FromForm]IFormFile file)
+        {
+            var id = currentUserService.GetIdFromClaims(HttpContext.User);
+            var result = await resumeService.UploadResume(file, id);
+            return Ok(result);
+        }
 
         [HttpDelete("delete")]
         public async Task<IActionResult> DeleteVolunteer()
@@ -60,7 +67,6 @@ namespace Volunteer.WebAPI.Controllers
             using var client = new HttpClient();
 
             client.DefaultRequestHeaders.Add("Authorization", auth.ToString());
-            //var response = await client.DeleteAsync($"http://localhost:5244/api/User?userId={id}");
             var response = await client.DeleteAsync($"{Constants.ngrok}/api/User?userId={id}");
             if (response.IsSuccessStatusCode)
             {
@@ -137,14 +143,6 @@ namespace Volunteer.WebAPI.Controllers
             return Ok(volunteer);
         }
 
-        [HttpPost("uploadResume")]
-        public async Task<IActionResult> UploadResume(IFormFile file)
-        {
-            var id = currentUserService.GetIdFromClaims(HttpContext.User);
-
-            var result = await resumeService.UploadResume(file, id);
-            return Ok(result);
-        }
 
         [HttpPost("sendRequestForJobOffer")]
         public async Task<IActionResult> SendRequestForJobOffer([FromBody] RequestForJobOfferDTO requestForJobOfferDTO)

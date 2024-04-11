@@ -117,7 +117,6 @@ namespace Volunteer.BL.Services
 
             var requestForJobOffer = new VolunteerJobOffer
             {
-                //Status = "unapprove",
                 Status = StatusRequest.unapprove,
                 JobOfferId = requestForJobOfferDTO.JobOfferId,
                 VolunteerId = volunteerId

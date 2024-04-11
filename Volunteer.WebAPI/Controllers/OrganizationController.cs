@@ -62,7 +62,7 @@ namespace Volunteer.WebAPI.Controllers
             using var client = new HttpClient();
 
             client.DefaultRequestHeaders.Add("Authorization", auth.ToString());
-            //var response = await client.DeleteAsync($"http://localhost:5244/api/User?userId={id}");
+           
             var response = await client.DeleteAsync($"{Constants.ngrok}/api/User?userId={id}");
             if (response.IsSuccessStatusCode)
             {

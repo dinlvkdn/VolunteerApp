@@ -22,7 +22,7 @@ namespace Volunteer.WebAPI.Controllers
         public IActionResult GetById()
         {
             Guid Id;
-            String roleName;
+            string roleName;
             try
             {
                 Id = Guid.Parse(HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
