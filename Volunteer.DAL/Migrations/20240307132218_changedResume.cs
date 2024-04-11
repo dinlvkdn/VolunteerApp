@@ -19,10 +19,9 @@ namespace Volunteer.DAL.Migrations
                 nullable: false,
                 defaultValue: new Guid("00000000-0000-0000-0000-000000000000"));
 
-            //custom query
+            
             migrationBuilder.Sql("UPDATE Resumes SET Resumes.VolunteerId = Volunteers.Id FROM Resumes INNER JOIN Volunteers ON Volunteers.ResumeId = Resumes.Id");
-            //migrationBuilder.Sql("UPDATE Resumes SET VolunteerId = Volunteers.Id FROM Resumes INNER JOIN Volunteers ON Volunteers.Id = Resumes.VolunteerId");
-
+            
             migrationBuilder.DropForeignKey(
                name: "FK_Volunteers_Resumes_ResumeId",
                table: "Volunteers");
