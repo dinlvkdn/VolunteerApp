@@ -13,7 +13,7 @@ namespace Volunteer.BL.Helper.ValidatorsDTO
 
             RuleFor(u => u.Description)
             .NotEmpty().WithMessage("Description is required.")
-            .MaximumLength(500).WithMessage("Description cannot be longer than 500 characters.");
+            .MaximumLength(900).WithMessage("Description cannot be longer than 900 characters.");
 
             RuleFor(u => u.FirstName)
             .NotEmpty().WithMessage("First name is required.")
