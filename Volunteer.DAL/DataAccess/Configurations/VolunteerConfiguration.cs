@@ -12,7 +12,7 @@ namespace Volunteer.DAL.DataAccess.Configurations
             builder.HasMany(x => x.Members)
                 .WithOne(x => x.Volunteer)
                 .HasForeignKey(x => x.VolunteerId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
 
             builder.HasKey(x => x.Id);
         }
