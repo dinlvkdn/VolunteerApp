@@ -1,7 +1,9 @@
 ﻿using Domain;
 using Domain.DTOs;
+using Domain.Pagination;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using System.Threading;
 using Volunteer.BL.Helper.Exceptions;
 using Volunteer.BL.Interfaces;
 using Volunteer.DAL.DataAccess;
@@ -110,8 +112,16 @@ namespace Volunteer.BL.Services
         {
             var requestForJobOffer = await _dbContext.VolunteerJobOffers.FirstOrDefaultAsync(i => i.JobOfferId == jobOfferId && i.VolunteerId == volunteerId);
 
-            //requestForJobOffer.Status = "confirm";
             requestForJobOffer.Status = StatusRequest.confirm;
+
+            var member = new Member
+            {
+                Id = Guid.NewGuid(),
+                JobOfferId = jobOfferId,
+                VolunteerId = volunteerId
+            };
+
+            await _dbContext.Members.AddAsync(member);
 
             _dbContext.VolunteerJobOffers.Update(requestForJobOffer);
             return await SaveChangesAsync();
@@ -121,11 +131,42 @@ namespace Volunteer.BL.Services
         {
             var requestForJobOffer = await _dbContext.VolunteerJobOffers.FirstOrDefaultAsync(i => i.JobOfferId == jobOfferId && i.VolunteerId == volunteerId);
 
-            //requestForJobOffer.Status = "rejected";
             requestForJobOffer.Status = StatusRequest.rejected;
 
             _dbContext.VolunteerJobOffers.Update(requestForJobOffer);
             return await SaveChangesAsync();
+        }
+
+        public async Task<PagedPesponse<List<FeedbackPaginationDTO>>> GetListFeedbacks(PaginationFilter filter, CancellationToken cancellationToken)
+        {
+            var query = _dbContext.Feedbacks
+                .Include(t => t.Member)
+                .ThenInclude(t => t.Volunteer)
+                .Where(t => t.OrganizationId == filter.OrganizationId);
+
+
+            var countRecords = await query
+                .CountAsync(cancellationToken);
+
+            query = query
+                .Skip(filter.PageNumber * filter.PageSize)
+                .Take(filter.PageSize);
+
+
+
+            var result = await query
+                .Select(p => new FeedbackPaginationDTO
+                {
+                    Id = p.Id,
+                    Comment = p.Description,
+                    Rating = p.Rating
+                })
+                .ToListAsync(cancellationToken);
+
+            return new PagedPesponse<List<FeedbackPaginationDTO>>(
+                result,
+                countRecords,
+                filter.PageNumber, filter.PageSize);
         }
     }
 }

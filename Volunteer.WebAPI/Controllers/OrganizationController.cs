@@ -1,33 +1,41 @@
 ﻿using Domain.DTOs;
+using Domain.Pagination;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing.Constraints;
+using System.Threading;
 using Volunteer.BL.Helper.Exceptions;
 using Volunteer.BL.Interfaces;
-using Volunteer.DAL.Models;
 
 namespace Volunteer.WebAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Organization")]
     public class OrganizationController : ControllerBase
     {
         private readonly IOrganizationService organizationService;
         private readonly ICurrentUserService currentUserService;
         private readonly IResumeService resumeService;
         private readonly IJobOfferService jobOfferService;
+        private readonly IVolunteerService volunteerService;
 
 
-        public OrganizationController(IOrganizationService organizationService, ICurrentUserService currentUserService, IResumeService resumeService, IJobOfferService jobOfferService)
+        public OrganizationController(
+            IOrganizationService organizationService,
+            ICurrentUserService currentUserService,
+            IResumeService resumeService,
+            IJobOfferService jobOfferService,
+            IVolunteerService volunteerService)
         {
             this.organizationService = organizationService;
             this.currentUserService = currentUserService;
             this.resumeService = resumeService;
             this.jobOfferService = jobOfferService;
+            this.volunteerService = volunteerService;
         }
 
-
         [HttpPost]
+        [Authorize(Roles = "Organization")]
         public async Task<IActionResult> AddOrganization(OrganizationInfoDTO organizationInfoDTO)
         {
             if (!ModelState.IsValid)
@@ -54,7 +62,8 @@ namespace Volunteer.WebAPI.Controllers
             }
         }
 
-        [HttpDelete("delete")]
+        [Authorize(Roles = "Organization")]
+        [HttpDelete]
         public async Task<IActionResult> DeleteOrganization()
         {
             var id = currentUserService.GetIdFromClaims(HttpContext.User);
@@ -62,13 +71,13 @@ namespace Volunteer.WebAPI.Controllers
             using var client = new HttpClient();
 
             client.DefaultRequestHeaders.Add("Authorization", auth.ToString());
-           
+
             var response = await client.DeleteAsync($"{Constants.ngrok}/api/User?userId={id}");
             if (response.IsSuccessStatusCode)
             {
                 if (await organizationService.DeleteOrganization(id))
                 {
-                    return Ok("Organization is deleted");
+                    return NoContent();
                 }
             }
 
@@ -81,6 +90,7 @@ namespace Volunteer.WebAPI.Controllers
 
         }
 
+        [Authorize(Roles = "Organization")]
         [HttpPut]
         public async Task<IActionResult> UpdateOrganization([FromBody] OrganizationInfoDTO organizationInfoDTO)
         {
@@ -91,7 +101,7 @@ namespace Volunteer.WebAPI.Controllers
 
             var id = currentUserService.GetIdFromClaims(HttpContext.User);
 
-            var organizationToUpdate = await organizationService.GetOrganizationInfo(id);
+            var organizationToUpdate = await organizationService.GetOrganizationById(id);
 
             if (organizationToUpdate == null)
             {
@@ -119,28 +129,27 @@ namespace Volunteer.WebAPI.Controllers
             }
         }
 
-        [HttpGet("getOrganization")]
-        public async Task<IActionResult> GetOrganizationById()
+        [Authorize(Roles = "Organization, Volunteer")]
+        [HttpGet("GetOrganization/{organizationId:Guid}")]
+        public async Task<IActionResult> GetOrganizationById([FromRoute] Guid organizationId)
         {
-            var id = currentUserService.GetIdFromClaims(HttpContext.User);
-
-            var organization = await organizationService.GetOrganizationInfo(id);
+            var organization = await organizationService.GetOrganizationInfo(organizationId);
 
             if (organization == null)
             {
                 throw new ApiException()
                 {
-                    StatusCode = StatusCodes.Status404NotFound,
-                    Title = "Organization doesn't exist",
-                    Detail = "No organization on database"
+                    StatusCode = StatusCodes.Status500InternalServerError,
+                    Title = "An error occurred",
+                    Detail = "An error occurred"
                 };
             }
-
             return Ok(organization);
         }
 
+        [Authorize(Roles = "Organization")]
         [HttpPut("confirmVolunteerOnJobOffer")]
-        public async Task<IActionResult> ConfirmVolunteerOnJobOffer([FromBody] RequestForJobOfferDTO requestForJobOfferDTO)
+        public async Task<IActionResult> ConfirmVolunteerOnJobOffer(RequestForJobOfferDTO requestForJobOfferDTO)
         {
             if (!ModelState.IsValid)
             {
@@ -151,7 +160,7 @@ namespace Volunteer.WebAPI.Controllers
 
             if (confirmVolunteerOnJobOffer)
             {
-                return Ok("Volunteer confirmed");
+                return NoContent();
             }
 
             throw new ApiException()
@@ -162,19 +171,20 @@ namespace Volunteer.WebAPI.Controllers
             };
         }
 
+        [Authorize(Roles = "Organization")]
         [HttpPut("cancelVolunteerJobOfferRequest")]
-        public async Task<IActionResult> CancelVolunteerJobOfferRequest([FromBody] RequestForJobOfferDTO requestForJobOfferDTO)
+        public async Task<IActionResult> CancelVolunteerJobOfferRequest(RequestForJobOfferDTO requestForJobOfferDTO)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest();
             }
 
-            var cancelVolunteerJobOfferRequest = await organizationService.CancelVolunteerJobOfferRequest(requestForJobOfferDTO.JobOfferId, requestForJobOfferDTO.VolunteerId );
+            var cancelVolunteerJobOfferRequest = await organizationService.CancelVolunteerJobOfferRequest(requestForJobOfferDTO.JobOfferId, requestForJobOfferDTO.VolunteerId);
 
             if (cancelVolunteerJobOfferRequest)
             {
-                return Ok("Volunteer job offer request cancelled");
+                return NoContent();
             }
 
             throw new ApiException()
@@ -185,29 +195,58 @@ namespace Volunteer.WebAPI.Controllers
             };
         }
 
-        [HttpGet("downloadResume")]
-        public async Task<IActionResult> DownloadResume([FromQuery] string fileName)
+
+        [Authorize(Roles = "Organization")]
+        [HttpGet("downloadResume/{volunteerId:Guid}")]
+        public async Task<IActionResult> DownloadResume([FromRoute] Guid volunteerId)
         {
-            var result = await resumeService.DownloadResume(fileName);
+            var result = await resumeService.DownloadResume(volunteerId);
+            if (result.Item1 == null || result.Item2 == null || result.Item3 == null)
+            {
+                throw new ApiException()
+                {
+                    StatusCode = StatusCodes.Status500InternalServerError,
+                    Title = "Can't download resume",
+                    Detail = "Error occured while downloading resume from server"
+                };
+            }
             return File(result.Item1, result.Item2, result.Item3);
         }
 
-        [HttpGet("{jobOfferId:Guid}")]
-        public async Task<IActionResult> GetAllRequestFromVolunteer([FromRoute] Guid jobOfferId)
+        [Authorize(Roles = "Organization")]
+        [HttpGet("getVolunteers")]
+        public async Task<IActionResult> GetAllVolunteers([FromQuery] PaginationFilter filter, CancellationToken cancellationToken)
         {
-            var organizationId = currentUserService.GetIdFromClaims(HttpContext.User);
-
-            var volunteer = await jobOfferService.GetAllRequestFromVolunteer(organizationId, jobOfferId);
-            if (volunteer != null)
+            var volunteers = await volunteerService.GetAllVolunteers(filter, cancellationToken);
+            if (volunteers != null)
             {
-                return Ok(volunteer);
+                return Ok(volunteers);
             }
 
             throw new ApiException()
             {
-                StatusCode = StatusCodes.Status404NotFound,
-                Title = "Not found",
-                Detail = "Error occured while getting volunteers."
+                StatusCode = StatusCodes.Status500InternalServerError,
+                Title = "Error retrieving data from the database",
+                Detail = "Error retrieving data from the database"
+            };
+        }
+
+        [Authorize(Roles = "Organization, Volunteer")]
+        [HttpGet("GetListFeedbacks")]
+        public async Task<IActionResult> GetListFeedbacks([FromQuery] PaginationFilter filter, CancellationToken cancellationToken)
+        {
+            var feedbacks = await organizationService.GetListFeedbacks(filter, cancellationToken);
+
+            if (feedbacks != null)
+            {
+                return Ok(feedbacks);
+            }
+
+            throw new ApiException()
+            {
+                StatusCode = StatusCodes.Status500InternalServerError,
+                Title = "Error retrieving data from the database",
+                Detail = "Error retrieving data from the database"
             };
         }
     }
