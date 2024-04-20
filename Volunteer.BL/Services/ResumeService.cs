@@ -17,40 +17,29 @@ namespace Volunteer.BL.Services
             _dbContext = dbContext;
         }
 
-        public async Task<(byte[], string, string)> DownloadResume(string FileName)
+        public async Task<(byte[], string, string)> DownloadResume(Guid volunteerId)
         {
-            try
-           {
-                var resume = await _dbContext.Resumes.Where(f => f.FileName == FileName).FirstOrDefaultAsync();
-                if (resume == null)
-                {
-                    throw new ApiException()
-                    {
-                        StatusCode = StatusCodes.Status404NotFound,
-                        Title = "Can`t find resume",
-                        Detail = "Error occured while finding resume"
-                    };
-                }
-                var getResumePath = resume.FileUrl;
-                var provider = new FileExtensionContentTypeProvider();
-                if (!provider.TryGetContentType(getResumePath, out var contentType))
-                {
-                    contentType = "application/octet-stream";
-                }
-                var readAllBytesAsync = await File.ReadAllBytesAsync(getResumePath);
-                return (readAllBytesAsync, contentType, Path.Combine(getResumePath));
-            }
-            catch(Exception ex)
+          
+            var resume = await _dbContext.Resumes.Where(f => f.VolunteerId == volunteerId).FirstOrDefaultAsync();
+            if (resume == null)
             {
                 throw new ApiException()
                 {
-                    StatusCode = StatusCodes.Status500InternalServerError,
-                    Title = "Can't download resume",
-                    Detail = "Error occured while downloading resume from server"
+                    StatusCode = StatusCodes.Status404NotFound,
+                    Title = "Can`t find resume",
+                    Detail = "Error occured while finding resume"
                 };
             }
+            var getResumePath = resume.FileUrl;
+            var provider = new FileExtensionContentTypeProvider();
+            if (!provider.TryGetContentType(getResumePath, out var contentType))
+            {
+                contentType = "application/pdf";
+            }
+            var readAllBytesAsync = await File.ReadAllBytesAsync(getResumePath);
+            return (readAllBytesAsync, contentType, Path.Combine(getResumePath));
         }
-
+         
         public async Task<string> UploadResume(IFormFile file, Guid volunteerId)
         {
             
