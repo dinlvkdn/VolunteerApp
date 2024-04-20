@@ -1,4 +1,5 @@
 ﻿using Domain.DTOs;
+using Domain.Pagination;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Volunteer.BL.Helper.Exceptions;
@@ -18,9 +19,10 @@ namespace Volunteer.WebAPI.Controllers
             this.jobOfferService = jobOfferService;
             this.currentUserService = currentUserService;
         }
+
         [Authorize(Roles = "Organization")]
         [HttpPost("createJobOffer")]
-        public async Task<IActionResult> CreateJobOffer([FromBody] JobOfferInfoDTO jobOfferInfoDTO)
+        public async Task<IActionResult> CreateJobOffer([FromBody] CreateJobOfferDTO jobOfferDTO)
         {
             if (!ModelState.IsValid)
             {
@@ -28,7 +30,7 @@ namespace Volunteer.WebAPI.Controllers
             }
 
             var organizationId = currentUserService.GetIdFromClaims(HttpContext.User);
-            var createJobOffer = await jobOfferService.CreateJobOffer(organizationId, jobOfferInfoDTO);
+            var createJobOffer = await jobOfferService.CreateJobOffer(organizationId, jobOfferDTO);
 
 
             if (createJobOffer != null)
@@ -45,6 +47,7 @@ namespace Volunteer.WebAPI.Controllers
                 };
             }
         }
+
         [Authorize(Roles = "Organization")]
         [HttpPut("updateJobOffer")]
         public async Task<IActionResult> UpdateJobOffer([FromBody] JobOfferInfoDTO jobOfferInfoDTO)
@@ -100,20 +103,82 @@ namespace Volunteer.WebAPI.Controllers
         }
 
         [Authorize(Roles = "Volunteer")]
-        [HttpGet]
-        public async Task<IActionResult> GetAllJobOffers()
+        [HttpGet("getAllJobOffers")]
+        public async Task<IActionResult> GetAllJobOffers([FromQuery] PaginationFilter filter, CancellationToken cancellationToken)
         {
-            var jobOffers = await jobOfferService.GetAllJobOffers();
-            if (jobOffers != null && jobOffers.Count != 0)
+            var jobOffers = await jobOfferService.GetAllJobOffers(filter, cancellationToken);
+
+            if (jobOffers != null)
             {
                 return Ok(jobOffers);
             }
-            else
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError,
 
-                    "Error retrieving data from the database");
+            throw new ApiException()
+            {
+                StatusCode = StatusCodes.Status500InternalServerError,
+                Title = "Error retrieving data from the database",
+                Detail = "Error retrieving data from the database"
+            };
+        }
+
+        [Authorize(Roles = "Organization, Volunteer")]
+        [HttpGet("getJobOfferRequests")]
+        public async Task<IActionResult> GetJobOfferRequests([FromQuery] PaginationFilter filter, CancellationToken cancellationToken)
+        {
+            var volunteerId = currentUserService.GetIdFromClaims(HttpContext.User);
+            var requests = await jobOfferService.GetJobOfferRequests(volunteerId, filter, cancellationToken);
+            if (requests != null)
+            {
+                return Ok(requests);
             }
-        }  
+
+            throw new ApiException()
+            {
+                StatusCode = StatusCodes.Status500InternalServerError,
+                Title = "Error retrieving data from the database",
+                Detail = "Error retrieving data from the database"
+            };
+        }
+
+        [Authorize(Roles = "Organization")]
+        [HttpGet("getRequestsFromVolunteers")]
+        public async Task<IActionResult> GetRequestsFromVolunteers([FromQuery] PaginationFilter filter, CancellationToken cancellationToken)
+        {
+            var organizationId = currentUserService.GetIdFromClaims(HttpContext.User);
+
+            var requests = await jobOfferService.GetRequestsFromVolunteers(organizationId, filter, cancellationToken);
+            if (requests != null)
+            {
+                return Ok(requests);
+            }
+
+            throw new ApiException()
+            {
+                StatusCode = StatusCodes.Status500InternalServerError,
+                Title = "Error retrieving data from the database",
+                Detail = "Error retrieving data from the database"
+            };
+        }
+
+        [Authorize(Roles = "Organization, Volunteer")]
+        [HttpGet("getOfferStatus/{offerId:Guid}")]
+        public async Task<IActionResult> GetOfferStatus([FromRoute] Guid offerId)
+        {
+            var volunteerId = currentUserService.GetIdFromClaims(HttpContext.User);
+
+            var status = await jobOfferService.GetOfferStatus(volunteerId, offerId);
+
+            if (status != null)
+            {
+                return Ok(status);
+            }
+
+            throw new ApiException()
+            {
+                StatusCode = StatusCodes.Status500InternalServerError,
+                Title = "Error retrieving data from the database",
+                Detail = "Error retrieving data from the database"
+            };
+        }
     }
 }
