@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Volunteer.BL.Helper.Exceptions;
 using Volunteer.BL.Interfaces;
+using Volunteer.BL.Services;
 
 namespace Volunteer.WebAPI.Controllers
 {
@@ -24,7 +25,6 @@ namespace Volunteer.WebAPI.Controllers
         }
 
         [HttpPost("addVolunteer")]
-
         public async Task<IActionResult> AdditionVolunteer(VolunteerInfoDTO volunteerInfoDTO)
         {
             if (!ModelState.IsValid)
@@ -59,7 +59,7 @@ namespace Volunteer.WebAPI.Controllers
             return Ok(result);
         }
 
-        [HttpDelete("delete")]
+        [HttpDelete]
         public async Task<IActionResult> DeleteVolunteer()
         {
             var id = currentUserService.GetIdFromClaims(HttpContext.User);
@@ -72,7 +72,7 @@ namespace Volunteer.WebAPI.Controllers
             {
                 if (await volunteerService.DeleteVolunteer(id))
                 {
-                    return Ok("Volunteer is deleted");
+                    return NoContent();
                 }
             }
 
@@ -84,7 +84,7 @@ namespace Volunteer.WebAPI.Controllers
             };
         }
 
-        [HttpPut("update")]
+        [HttpPut]
         public async Task<IActionResult> UpdateVolunteer([FromBody] VolunteerShortInfoDTO volunteerDTO)
         {
             if (!ModelState.IsValid)
@@ -143,18 +143,31 @@ namespace Volunteer.WebAPI.Controllers
             return Ok(volunteer);
         }
 
-
-        [HttpPost("sendRequestForJobOffer")]
-        public async Task<IActionResult> SendRequestForJobOffer([FromBody] RequestForJobOfferDTO requestForJobOfferDTO)
+        [HttpGet("GetVolunteer/{volunteerId:Guid}")]
+        public async Task<IActionResult> GetVolunteer([FromRoute] Guid volunteerId)
         {
-            if (!ModelState.IsValid)
+            var volunteer = await volunteerService.GetVolunteerInfo(volunteerId);
+
+            if (volunteer == null)
             {
-                return BadRequest();
+                throw new ApiException()
+                {
+                    StatusCode = StatusCodes.Status404NotFound,
+                    Title = "Volunteer doesn't exist",
+                    Detail = "No volunteer on database"
+                };
             }
+            return Ok(volunteer);
+        }
+
+
+       [HttpPost("sendRequestForJobOffer/{jobOfferId:Guid}")]
+        public async Task<IActionResult> SendRequestForJobOffer([FromRoute] Guid jobOfferId)
+        {
 
             var volunteerId = currentUserService.GetIdFromClaims(HttpContext.User);
 
-            var sendRequestForJobOffer = await volunteerService.SendRequestForJobOffer(volunteerId, requestForJobOfferDTO);
+            var sendRequestForJobOffer = await volunteerService.SendRequestForJobOffer(volunteerId, jobOfferId);
 
             if (sendRequestForJobOffer)
             {
@@ -166,6 +179,47 @@ namespace Volunteer.WebAPI.Controllers
                 StatusCode = StatusCodes.Status500InternalServerError,
                 Title = "Failed to send request to job offer",
                 Detail = "Failed to send request to job offer"
+            };
+        }
+
+        [Authorize(Roles = "Organization, Volunteer")]
+        [HttpGet("isMember/{organizationId:Guid}")]
+        public async Task<IActionResult> IsMember([FromRoute] Guid organizationId)
+        {
+            var volunteerId = currentUserService.GetIdFromClaims(HttpContext.User);
+
+            var isMember = await volunteerService.IsMember(organizationId, volunteerId);
+
+            if (isMember)
+            {
+                return Ok(isMember);
+            }
+
+            throw new ApiException()
+            {
+                StatusCode = StatusCodes.Status500InternalServerError,
+                Title = "Error retrieving data from the database",
+                Detail = "Error retrieving data from the database"
+            };
+        }
+
+        [Authorize(Roles = "Volunteer")]
+        [HttpPost("addFeedback")]
+        public async Task<IActionResult> AddFeedback(FeedbackDTO feedbackDTO)
+        {
+            var volunteerId = currentUserService.GetIdFromClaims(HttpContext.User);
+            var result = await volunteerService.AddFeedback(volunteerId, feedbackDTO);
+
+            if (result)
+            {
+                return Ok(result);
+            }
+
+            throw new ApiException()
+            {
+                StatusCode = StatusCodes.Status500InternalServerError,
+                Title = "Error retrieving data from the database",
+                Detail = "Error retrieving data from the database"
             };
         }
     }

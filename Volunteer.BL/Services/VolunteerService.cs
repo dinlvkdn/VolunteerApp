@@ -1,5 +1,6 @@
 ﻿using Domain;
 using Domain.DTOs;
+using Domain.Pagination;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Volunteer.BL.Helper.Exceptions;
@@ -96,7 +97,6 @@ namespace Volunteer.BL.Services
         {
             var volunteer = await GetVolunteerById(id);
 
-
             volunteer.FirstName = volunteerDTO.FirstName;
             volunteer.LastName = volunteerDTO.LastName;
             volunteer.Description = volunteerDTO.Description;
@@ -111,17 +111,98 @@ namespace Volunteer.BL.Services
         public async Task<bool> SaveChangesAsync()
             => await _dbContext.SaveChangesAsync() > 0;
 
-        public async Task<bool> SendRequestForJobOffer(Guid volunteerId, RequestForJobOfferDTO requestForJobOfferDTO)
+        public async Task<bool> SendRequestForJobOffer(Guid volunteerId, Guid jobOfferId)
         {
-      
-
+ 
             var requestForJobOffer = new VolunteerJobOffer
             {
                 Status = StatusRequest.unapprove,
-                JobOfferId = requestForJobOfferDTO.JobOfferId,
+                JobOfferId = jobOfferId,
                 VolunteerId = volunteerId
             };
             await _dbContext.VolunteerJobOffers.AddAsync(requestForJobOffer);
+
+            var isMember = _dbContext.Members
+                .Where(t => t.JobOfferId == jobOfferId && t.VolunteerId == volunteerId)
+                .FirstOrDefault();
+
+            if (isMember == null)
+            {
+                var member = new Member
+                {
+                    Id = Guid.NewGuid(),
+                    VolunteerId = volunteerId,
+                    JobOfferId = jobOfferId
+                };
+
+                await _dbContext.Members.AddAsync(member);
+            }   
+           
+            return await SaveChangesAsync();
+        }
+
+        public async Task<PagedPesponse<List<VolunteerPaginationDTO>>> GetAllVolunteers(PaginationFilter filter, CancellationToken cancellationToken)
+        {
+            IQueryable<DAL.Models.Volunteer> query = _dbContext.Volunteers;
+
+            query = filter.SortColumn switch
+            {
+                "Id" when filter.SortDirection == "asc" => query
+                    .OrderBy(p => p.Id),
+                "Id" => query.OrderByDescending(p => p.Id),
+                _ => query
+            };
+
+            var countRecords = await query
+                .CountAsync(cancellationToken);
+
+            query = query
+                .Skip(filter.PageNumber * filter.PageSize)
+                .Take(filter.PageSize);
+
+            var result = await query
+                .Select(p => new VolunteerPaginationDTO
+                {
+                    Id = p.Id,
+                    DateOfBirth = p.DateOfBirth,
+                    FirstName = p.FirstName,
+                    LastName = p.LastName,
+                    Description = p.Description
+                })
+                .ToListAsync(cancellationToken);
+
+            return new PagedPesponse<List<VolunteerPaginationDTO>>(
+                result,
+                countRecords,
+                filter.PageNumber, filter.PageSize);
+        }
+
+        public async Task<bool> IsMember(Guid organizationId, Guid volunteerId)
+        {
+            var isMember = await _dbContext.Members
+                .AnyAsync(m => m.VolunteerId == volunteerId && m.JobOffer.OrganizationId == organizationId);
+
+            if (isMember)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        public async Task<bool> AddFeedback(Guid volunteerId, FeedbackDTO feedbackDTO)
+        {
+
+            var feedback = new Feedback
+            {
+                Id = Guid.NewGuid(),
+                OrganizationId = feedbackDTO.OrganizationId,
+                VolunteerId = volunteerId,
+                Description = feedbackDTO.Comment,
+                Rating = feedbackDTO.Rating
+            };
+
+            await _dbContext.Feedbacks.AddAsync(feedback);
             return await SaveChangesAsync();
         }
     }

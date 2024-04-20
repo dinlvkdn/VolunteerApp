@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Volunteer.DAL.DataAccess;
 
@@ -11,9 +12,11 @@ using Volunteer.DAL.DataAccess;
 namespace Volunteer.DAL.Migrations
 {
     [DbContext(typeof(VolunteerDBContext))]
-    partial class VolunteerDBContextModelSnapshot : ModelSnapshot
+    [Migration("20240417163431_MadeColumnNullable")]
+    partial class MadeColumnNullable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -31,15 +34,6 @@ namespace Volunteer.DAL.Migrations
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("OrganizationId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("Rating")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("VolunteerId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
@@ -253,7 +247,7 @@ namespace Volunteer.DAL.Migrations
                     b.HasOne("Volunteer.DAL.Models.Volunteer", "Volunteer")
                         .WithMany("Members")
                         .HasForeignKey("VolunteerId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Feedback");
