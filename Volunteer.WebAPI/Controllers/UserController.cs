@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Volunteer.BL.Helper.Exceptions;
 using Volunteer.DAL.DataAccess;
@@ -17,7 +16,6 @@ namespace Volunteer.WebAPI.Controllers
             _dbContext = dbContext;
         }
 
-        [Authorize]
         [HttpGet]
         public IActionResult GetById()
         {
@@ -28,7 +26,7 @@ namespace Volunteer.WebAPI.Controllers
                 Id = Guid.Parse(HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
                 roleName = HttpContext.User.FindFirstValue(ClaimTypes.Role);
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 throw new ApiException()
                 {
@@ -40,13 +38,11 @@ namespace Volunteer.WebAPI.Controllers
 
             if (roleName == "Volunteer")
             {
-                return Redirect($"/api/Volunteer/GetVolunteerById/{Id}");
-                //return Redirect($"/api/Volunteer/{Id}");
+                return Redirect($"/api/Volunteer/GetVolunteer/{Id}");
             }
             else if (roleName == "Organization")
             {
-                //return Redirect($"/api/Organization/GetOrganizationById/{Id}");
-                return Redirect($"/api/Organization");
+                return Redirect($"/api/Organization/GetOrganization/{Id}");
             }
 
             return BadRequest();
