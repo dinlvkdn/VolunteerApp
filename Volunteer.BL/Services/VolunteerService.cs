@@ -145,6 +145,14 @@ namespace Volunteer.BL.Services
         {
             IQueryable<DAL.Models.Volunteer> query = _dbContext.Volunteers;
 
+            if (filter.SearchCriteria != null)
+            {
+                query = query.Where(s =>
+                    s.LastName.Contains(filter.SearchCriteria) ||
+                    s.FirstName.Contains(filter.SearchCriteria)
+                );
+            }
+
             query = filter.SortColumn switch
             {
                 "Id" when filter.SortDirection == "asc" => query
