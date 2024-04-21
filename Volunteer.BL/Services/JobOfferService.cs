@@ -68,6 +68,11 @@ namespace Volunteer.BL.Services
                 query = query.Where(o => o.OrganizationId == filter.OrganizationId);
             }
 
+            if(filter.SearchCriteria != null)
+            {
+                query = query.Where(s => s.Title.Contains(filter.SearchCriteria));
+            }
+
             query = filter.SortColumn switch
             {
                 "DateTime" when filter.SortDirection == "asc" => query

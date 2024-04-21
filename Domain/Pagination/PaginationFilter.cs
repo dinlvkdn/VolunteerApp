@@ -8,6 +8,7 @@
         public string SortColumn { get; set; }
 
         public Guid? OrganizationId { get; set; }
+        public string? SearchCriteria { get; set; }
         public PaginationFilter()
         {
             PageNumber = 1;
