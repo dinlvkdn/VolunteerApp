@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Volunteer.BL.Helper.Exceptions;
 using Volunteer.BL.Interfaces;
+using Volunteer.BL.Services;
 
 namespace Volunteer.WebAPI.Controllers
 {
@@ -83,30 +84,11 @@ namespace Volunteer.WebAPI.Controllers
             return Ok(jobOffer);
         }
 
-        [Authorize(Roles = "Organization")]
-        [HttpDelete("{id:Guid}")]
-        public async Task<IActionResult> DeleteJobOfferById([FromRoute] Guid id)
-        {
-            if (await jobOfferService.DeleteJobOfferById(id))
-            {
-                return Ok("JobOffer is deleted");
-            }
-            else
-            {
-                throw new ApiException()
-                {
-                    StatusCode = StatusCodes.Status500InternalServerError,
-                    Title = "JobOffer is not deleted",
-                    Detail = "Error occured while deleting jobOffer on server"
-                };
-            }
-        }
-
-        [Authorize(Roles = "Volunteer")]
+        [Authorize(Roles = "Volunteer, Organization")]
         [HttpGet("getAllJobOffers")]
         public async Task<IActionResult> GetAllJobOffers([FromQuery] PaginationFilter filter, CancellationToken cancellationToken)
         {
-            var jobOffers = await jobOfferService.GetAllJobOffers(filter, cancellationToken);
+           var jobOffers = await jobOfferService.GetAllJobOffers(filter, cancellationToken);
 
             if (jobOffers != null)
             {
@@ -168,16 +150,30 @@ namespace Volunteer.WebAPI.Controllers
 
             var status = await jobOfferService.GetOfferStatus(volunteerId, offerId);
 
-            if (status != null)
-            {
-                return Ok(status);
-            }
+            return status != null
+                ? (IActionResult)Ok(status)
+                : throw new ApiException()
+                {
+                    StatusCode = StatusCodes.Status500InternalServerError,
+                    Title = "Error retrieving data from the database",
+                    Detail = "Error retrieving data from the database"
+                };
+        }
 
+        [Authorize(Roles = "Organization")]
+        [HttpDelete("delete/{offerId:Guid}")]
+        public async Task<IActionResult> DeleteJobOffer([FromRoute] Guid offerId)
+        {
+            var organizationId = currentUserService.GetIdFromClaims(HttpContext.User);
+            if (await jobOfferService.DeleteJobOffer(organizationId, offerId))
+            {
+                return NoContent();
+            }
             throw new ApiException()
             {
                 StatusCode = StatusCodes.Status500InternalServerError,
-                Title = "Error retrieving data from the database",
-                Detail = "Error retrieving data from the database"
+                Title = "Offer is not deleted",
+                Detail = "Error occured while deleting offer on server"
             };
         }
     }

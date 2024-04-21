@@ -3,8 +3,6 @@ using Domain.DTOs;
 using Domain.Pagination;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using System.Reflection.Metadata.Ecma335;
-using System.Threading;
 using Volunteer.BL.Helper.Exceptions;
 using Volunteer.BL.Interfaces;
 using Volunteer.DAL.DataAccess;
@@ -41,22 +39,6 @@ namespace Volunteer.BL.Services
             await _dbContext.SaveChangesAsync();
 
             return jobOfferDTO;
-        }
-
-        public async Task<bool> DeleteJobOfferById(Guid id)
-        {
-            var jobOffer = await _dbContext.JobOffer.FindAsync(id);
-            if (jobOffer == null)
-            {
-                throw new ApiException()
-                {
-                    StatusCode = StatusCodes.Status404NotFound,
-                    Title = "JobOffer doesn't exist",
-                    Detail = "No jobOffer on database"
-                };
-            }
-            _dbContext.JobOffer.Remove(jobOffer);
-            return await SaveChangesAsync();
         }
 
         public async Task<PagedPesponse<List<JobOfferPaginationDTO>>> GetAllJobOffers(PaginationFilter filter, CancellationToken cancellationToken)
@@ -176,23 +158,6 @@ namespace Volunteer.BL.Services
         public async Task<bool> SaveChangesAsync()
              => await _dbContext.SaveChangesAsync() > 0;
 
-        //public async Task<List<AllRequestFromVolunteerDTO>> GetAllRequestFromVolunteer(Guid organizationId, Guid jobOfferId)
-        //{
-        //    var resultDTO = await _dbContext.VolunteerJobOffers
-        //        .Include(t => t.Volunteer)
-        //        .Where(t => t.JobOfferId == jobOfferId)
-        //        .Where(t => t.Status == StatusRequest.unapprove)
-        //        .Select(v => new AllRequestFromVolunteerDTO()
-        //        {
-        //            FirstName = v.Volunteer.FirstName,
-        //            LastName = v.Volunteer.LastName,
-        //            JobOfferId = v.JobOfferId
-        //        })
-        //        .ToListAsync();
-
-        //    return resultDTO;
-        //}
-
         public async Task<PagedPesponse<List<JobOfferRequestDTO>>> GetJobOfferRequests(Guid volunteerId, PaginationFilter filter, CancellationToken cancellationToken)
         {
             var jobOffersByVolunteerQuery = _dbContext.VolunteerJobOffers
@@ -279,6 +244,25 @@ namespace Volunteer.BL.Services
             }
 
             return status.Status;
+        }
+
+        public async Task<bool> DeleteJobOffer(Guid organizationId, Guid offerId)
+        {
+            var jobOffer = await GetGobOfferById(offerId);
+
+            if (jobOffer == null)
+            {
+                throw new ApiException()
+                {
+                    StatusCode = StatusCodes.Status404NotFound,
+                    Title = "JobOffer doesn't exist",
+                    Detail = "No jobOffer on database"
+                };
+            }
+
+            _dbContext.JobOffer.Remove(jobOffer);
+
+            return await SaveChangesAsync();
         }
     }
 }

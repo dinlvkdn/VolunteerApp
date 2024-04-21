@@ -12,9 +12,7 @@ namespace Volunteer.BL.Interfaces
         Task<ShowJobOfferDTO> GetGobOfferInfo(Guid id);
         Task<JobOffer> GetGobOfferById(Guid id);
         Task<JobOfferInfoDTO> UpdateJobOffer(JobOfferInfoDTO jobOfferInfoDTO);
-        Task<bool> DeleteJobOfferById(Guid id);
         Task<StatusRequest> GetOfferStatus(Guid volunteerId, Guid offerId);
-        //Task<List<AllRequestFromVolunteerDTO>> GetAllRequestFromVolunteer(Guid organizationId, Guid jobOfferId);
         Task<PagedPesponse<List<JobOfferRequestDTO>>> GetJobOfferRequests(
             Guid volunteerId,
             PaginationFilter filter,
@@ -23,5 +21,6 @@ namespace Volunteer.BL.Interfaces
             Guid organizationId,
             PaginationFilter filter,
             CancellationToken cancellationToken);
+        Task<bool> DeleteJobOffer(Guid organizationId, Guid offerId);
     }
 }
