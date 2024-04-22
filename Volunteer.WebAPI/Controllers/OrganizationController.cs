@@ -2,8 +2,6 @@
 using Domain.Pagination;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Routing.Constraints;
-using System.Threading;
 using Volunteer.BL.Helper.Exceptions;
 using Volunteer.BL.Interfaces;
 
@@ -18,7 +16,6 @@ namespace Volunteer.WebAPI.Controllers
         private readonly IResumeService resumeService;
         private readonly IJobOfferService jobOfferService;
         private readonly IVolunteerService volunteerService;
-
 
         public OrganizationController(
             IOrganizationService organizationService,
@@ -129,7 +126,7 @@ namespace Volunteer.WebAPI.Controllers
             }
         }
 
-        [Authorize(Roles = "Organization, Volunteer")]
+        [Authorize(Roles = "Organization, Volunteer, Admin")]
         [HttpGet("GetOrganization/{organizationId:Guid}")]
         public async Task<IActionResult> GetOrganizationById([FromRoute] Guid organizationId)
         {
@@ -231,7 +228,7 @@ namespace Volunteer.WebAPI.Controllers
             };
         }
 
-        [Authorize(Roles = "Organization, Volunteer")]
+        [Authorize(Roles = "Organization, Volunteer, Admin")]
         [HttpGet("GetListFeedbacks")]
         public async Task<IActionResult> GetListFeedbacks([FromQuery] PaginationFilter filter, CancellationToken cancellationToken)
         {

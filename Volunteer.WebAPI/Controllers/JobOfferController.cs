@@ -84,7 +84,7 @@ namespace Volunteer.WebAPI.Controllers
             return Ok(jobOffer);
         }
 
-        [Authorize(Roles = "Volunteer, Organization")]
+        [Authorize(Roles = "Volunteer, Organization, Admin")]
         [HttpGet("getAllJobOffers")]
         public async Task<IActionResult> GetAllJobOffers([FromQuery] PaginationFilter filter, CancellationToken cancellationToken)
         {

@@ -37,6 +37,7 @@ namespace Volunteer.WebAPI
             builder.Services.AddScoped<IVolunteerService, VolunteerService>();
             builder.Services.AddScoped<IOrganizationService, OrganizationService>();
             builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+            builder.Services.AddScoped<IStatusHistoryService, StatusHistoryService>();
 
 
             builder.Services.AddTransient<IResumeService, ResumeService>();
