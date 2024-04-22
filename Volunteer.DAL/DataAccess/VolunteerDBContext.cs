@@ -11,7 +11,6 @@ namespace Volunteer.DAL.DataAccess
         public DbSet<Member> Members { get; set; }
         public DbSet<Organization> Organizations {get; set; }
         public DbSet<Resume> Resumes { get; set; }
-        public DbSet<StatusHistory> StatusHistory { get; set; }
         public DbSet<Models.Volunteer> Volunteers { get; set; }
         public DbSet<VolunteerJobOffer> VolunteerJobOffers { get; set; }
 
@@ -36,7 +35,6 @@ namespace Volunteer.DAL.DataAccess
             builder.ApplyConfiguration(new MemberConfiguration());
             builder.ApplyConfiguration(new OrganizationConfiguration());
             builder.ApplyConfiguration(new ResumeConfiguration());
-            builder.ApplyConfiguration(new StatusHistoryConfiguration());
             builder.ApplyConfiguration(new VolunteerConfiguration());
             builder.ApplyConfiguration(new VolunteerJobOfferConfiguration());
 

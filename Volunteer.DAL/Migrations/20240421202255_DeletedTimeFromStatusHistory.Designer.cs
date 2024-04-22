@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Volunteer.DAL.DataAccess;
 
@@ -11,9 +12,11 @@ using Volunteer.DAL.DataAccess;
 namespace Volunteer.DAL.Migrations
 {
     [DbContext(typeof(VolunteerDBContext))]
-    partial class VolunteerDBContextModelSnapshot : ModelSnapshot
+    [Migration("20240421202255_DeletedTimeFromStatusHistory")]
+    partial class DeletedTimeFromStatusHistory
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -204,6 +207,26 @@ namespace Volunteer.DAL.Migrations
                     b.ToTable("VolunteerJobOffers");
                 });
 
+            modelBuilder.Entity("Volunteer.DAL.StatusHistory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrganizationId");
+
+                    b.ToTable("StatusHistory");
+                });
+
             modelBuilder.Entity("Volunteer.DAL.Models.JobOffer", b =>
                 {
                     b.HasOne("Volunteer.DAL.Models.Organization", "Organization")
@@ -270,6 +293,17 @@ namespace Volunteer.DAL.Migrations
                     b.Navigation("Volunteer");
                 });
 
+            modelBuilder.Entity("Volunteer.DAL.StatusHistory", b =>
+                {
+                    b.HasOne("Volunteer.DAL.Models.Organization", "Organization")
+                        .WithMany("StatusHistories")
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Organization");
+                });
+
             modelBuilder.Entity("Volunteer.DAL.Models.Feedback", b =>
                 {
                     b.Navigation("Member")
@@ -286,6 +320,8 @@ namespace Volunteer.DAL.Migrations
             modelBuilder.Entity("Volunteer.DAL.Models.Organization", b =>
                 {
                     b.Navigation("JobOffers");
+
+                    b.Navigation("StatusHistories");
                 });
 
             modelBuilder.Entity("Volunteer.DAL.Models.Volunteer", b =>

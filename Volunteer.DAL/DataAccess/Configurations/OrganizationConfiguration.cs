@@ -12,10 +12,6 @@ namespace Volunteer.DAL.DataAccess.Configurations
                  .WithOne(x => x.Organization)
                  .HasForeignKey(x => x.OrganizationId);
 
-            builder.HasMany(x => x.StatusHistories)
-                .WithOne(x => x.Organization)
-                .HasForeignKey(x => x.OrganizationId);
-
             builder.HasKey(x => x.Id);
         }
     }
