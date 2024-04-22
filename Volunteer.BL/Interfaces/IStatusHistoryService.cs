@@ -1,10 +1,12 @@
 ﻿using Domain.DTOs;
-using Volunteer.DAL;
+using Domain.Pagination;
 
 namespace Volunteer.BL.Interfaces
 {
     public interface IStatusHistoryService
     {
-        Task<StatusHistoryDTO> AddStatusHistory(StatusHistoryDTO statusHistoryDTO);
+        Task<PagedPesponse<List<OrganizationDTO>>> GetAllOrganizations(
+            PaginationFilter filter,
+            CancellationToken cancellationToken);
     }
 }
