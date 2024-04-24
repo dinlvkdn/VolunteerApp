@@ -13,6 +13,8 @@ namespace Volunteer.BL.Interfaces
         Task<Organization> GetOrganizationById(Guid id);
         Task<bool> ConfirmVolunteerOnJobOffer(Guid jobOfferIdб, Guid volunteerId);
         Task<bool> CancelVolunteerJobOfferRequest(Guid jobOfferId, Guid volunteerId);
-        Task<PagedPesponse<List<FeedbackPaginationDTO>>> GetListFeedbacks(PaginationFilter filter, CancellationToken cancellationToken);
+        Task<PagedPesponse<List<FeedbackPaginationDTO>>> GetListFeedbacks(
+            PaginationFilter filter,
+            CancellationToken cancellationToken);
     }
 }

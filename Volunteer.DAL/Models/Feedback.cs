@@ -7,7 +7,6 @@ namespace Volunteer.DAL.Models
         public int Rating { get; set; }
         public Guid OrganizationId { get; set; }
         public Guid VolunteerId { get; set; }
-
         public Member Member { get; set; }
     }
 }

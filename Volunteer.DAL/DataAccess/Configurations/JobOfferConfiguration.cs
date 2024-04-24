@@ -9,14 +9,11 @@ namespace Volunteer.DAL.DataAccess.Configurations
     {
         public void Configure(EntityTypeBuilder<JobOffer> builder)
         {
-            
-
             builder.HasMany(x => x.Members)
                 .WithOne(x => x.JobOffer)
                 .HasForeignKey(x => x.JobOfferId);
 
             builder.HasKey(x => x.Id);
-
         }
     }
 }

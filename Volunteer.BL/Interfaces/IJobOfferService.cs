@@ -8,7 +8,9 @@ namespace Volunteer.BL.Interfaces
     public interface IJobOfferService
     {
         Task<CreateJobOfferDTO> CreateJobOffer(Guid id, CreateJobOfferDTO jobOfferDTO);
-        Task<PagedPesponse<List<JobOfferPaginationDTO>>> GetAllJobOffers(PaginationFilter paginationFilter, CancellationToken cancellationToken);
+        Task<PagedPesponse<List<JobOfferPaginationDTO>>> GetAllJobOffers(
+            PaginationFilter paginationFilter,
+            CancellationToken cancellationToken);
         Task<ShowJobOfferDTO> GetGobOfferInfo(Guid id);
         Task<JobOffer> GetGobOfferById(Guid id);
         Task<JobOfferInfoDTO> UpdateJobOffer(JobOfferInfoDTO jobOfferInfoDTO);

@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Volunteer.BL.Helper.Exceptions;
 using Volunteer.BL.Interfaces;
-using Volunteer.BL.Services;
 
 namespace Volunteer.WebAPI.Controllers
 {
