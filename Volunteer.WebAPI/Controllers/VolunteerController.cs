@@ -170,7 +170,7 @@ namespace Volunteer.WebAPI.Controllers
 
             if (sendRequestForJobOffer)
             {
-                return Ok("Successfully sent a request to job offer");
+                return NoContent();
             }
             
             throw new ApiException()
