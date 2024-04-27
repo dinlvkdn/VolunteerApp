@@ -11,16 +11,13 @@ namespace Volunteer.DAL.DataAccess
         public DbSet<Member> Members { get; set; }
         public DbSet<Organization> Organizations {get; set; }
         public DbSet<Resume> Resumes { get; set; }
-        public DbSet<StatusHistory> StatusHistory { get; set; }
         public DbSet<Models.Volunteer> Volunteers { get; set; }
         public DbSet<VolunteerJobOffer> VolunteerJobOffers { get; set; }
-        public DbSet<User> Users { get; set; }
 
         public VolunteerDBContext()
         {
 
         }
-
         public VolunteerDBContext(DbContextOptions<VolunteerDBContext> option) : base(option)
         {
 
@@ -38,12 +35,11 @@ namespace Volunteer.DAL.DataAccess
             builder.ApplyConfiguration(new MemberConfiguration());
             builder.ApplyConfiguration(new OrganizationConfiguration());
             builder.ApplyConfiguration(new ResumeConfiguration());
-            builder.ApplyConfiguration(new StatusHistoryConfiguration());
             builder.ApplyConfiguration(new VolunteerConfiguration());
             builder.ApplyConfiguration(new VolunteerJobOfferConfiguration());
+
             base.OnModelCreating(builder);
         }
-
     }
 }
 

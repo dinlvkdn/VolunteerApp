@@ -32,6 +32,15 @@ namespace Volunteer.DAL.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("VolunteerId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
 
                     b.ToTable("Feedbacks");
@@ -82,7 +91,7 @@ namespace Volunteer.DAL.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("FeedbackId")
+                    b.Property<Guid?>("FeedbackId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("JobOfferId")
@@ -94,7 +103,8 @@ namespace Volunteer.DAL.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("FeedbackId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[FeedbackId] IS NOT NULL");
 
                     b.HasIndex("JobOfferId");
 
@@ -131,53 +141,23 @@ namespace Volunteer.DAL.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("FileUrl")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("Id");
-
-                    b.ToTable("Resumes");
-                });
-
-            modelBuilder.Entity("Volunteer.DAL.Models.User", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid?>("OrganizationId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("RoleName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid?>("VolunteerId")
+                    b.Property<Guid>("VolunteerId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("OrganizationId")
-                        .IsUnique()
-                        .HasFilter("[OrganizationId] IS NOT NULL");
 
                     b.HasIndex("VolunteerId")
-                        .IsUnique()
-                        .HasFilter("[VolunteerId] IS NOT NULL");
+                        .IsUnique();
 
-                    b.ToTable("Users");
+                    b.ToTable("Resumes");
                 });
 
             modelBuilder.Entity("Volunteer.DAL.Models.Volunteer", b =>
@@ -201,13 +181,7 @@ namespace Volunteer.DAL.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid>("ResumeId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("ResumeId")
-                        .IsUnique();
 
                     b.ToTable("Volunteers");
                 });
@@ -220,38 +194,14 @@ namespace Volunteer.DAL.Migrations
                     b.Property<Guid>("JobOfferId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.HasKey("VolunteerId", "JobOfferId");
 
                     b.HasIndex("JobOfferId");
 
                     b.ToTable("VolunteerJobOffers");
-                });
-
-            modelBuilder.Entity("Volunteer.DAL.StatusHistory", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("OrganizationId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("Time")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OrganizationId");
-
-                    b.ToTable("StatusHistory");
                 });
 
             modelBuilder.Entity("Volunteer.DAL.Models.JobOffer", b =>
@@ -269,9 +219,7 @@ namespace Volunteer.DAL.Migrations
                 {
                     b.HasOne("Volunteer.DAL.Models.Feedback", "Feedback")
                         .WithOne("Member")
-                        .HasForeignKey("Volunteer.DAL.Models.Member", "FeedbackId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("Volunteer.DAL.Models.Member", "FeedbackId");
 
                     b.HasOne("Volunteer.DAL.Models.JobOffer", "JobOffer")
                         .WithMany("Members")
@@ -282,7 +230,7 @@ namespace Volunteer.DAL.Migrations
                     b.HasOne("Volunteer.DAL.Models.Volunteer", "Volunteer")
                         .WithMany("Members")
                         .HasForeignKey("VolunteerId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Feedback");
@@ -292,30 +240,15 @@ namespace Volunteer.DAL.Migrations
                     b.Navigation("Volunteer");
                 });
 
-            modelBuilder.Entity("Volunteer.DAL.Models.User", b =>
+            modelBuilder.Entity("Volunteer.DAL.Models.Resume", b =>
                 {
-                    b.HasOne("Volunteer.DAL.Models.Organization", "Organization")
-                        .WithOne("User")
-                        .HasForeignKey("Volunteer.DAL.Models.User", "OrganizationId");
-
                     b.HasOne("Volunteer.DAL.Models.Volunteer", "Volunteer")
-                        .WithOne("User")
-                        .HasForeignKey("Volunteer.DAL.Models.User", "VolunteerId");
-
-                    b.Navigation("Organization");
-
-                    b.Navigation("Volunteer");
-                });
-
-            modelBuilder.Entity("Volunteer.DAL.Models.Volunteer", b =>
-                {
-                    b.HasOne("Volunteer.DAL.Models.Resume", "Resume")
-                        .WithOne("Volunteer")
-                        .HasForeignKey("Volunteer.DAL.Models.Volunteer", "ResumeId")
+                        .WithOne("Resume")
+                        .HasForeignKey("Volunteer.DAL.Models.Resume", "VolunteerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Resume");
+                    b.Navigation("Volunteer");
                 });
 
             modelBuilder.Entity("Volunteer.DAL.Models.VolunteerJobOffer", b =>
@@ -335,17 +268,6 @@ namespace Volunteer.DAL.Migrations
                     b.Navigation("JobOffer");
 
                     b.Navigation("Volunteer");
-                });
-
-            modelBuilder.Entity("Volunteer.DAL.StatusHistory", b =>
-                {
-                    b.HasOne("Volunteer.DAL.Models.Organization", "Organization")
-                        .WithMany("StatusHistories")
-                        .HasForeignKey("OrganizationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Organization");
                 });
 
             modelBuilder.Entity("Volunteer.DAL.Models.Feedback", b =>
@@ -364,24 +286,13 @@ namespace Volunteer.DAL.Migrations
             modelBuilder.Entity("Volunteer.DAL.Models.Organization", b =>
                 {
                     b.Navigation("JobOffers");
-
-                    b.Navigation("StatusHistories");
-
-                    b.Navigation("User")
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Volunteer.DAL.Models.Resume", b =>
-                {
-                    b.Navigation("Volunteer")
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("Volunteer.DAL.Models.Volunteer", b =>
                 {
                     b.Navigation("Members");
 
-                    b.Navigation("User")
+                    b.Navigation("Resume")
                         .IsRequired();
 
                     b.Navigation("VolunteerJobOffers");

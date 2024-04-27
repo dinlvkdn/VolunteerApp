@@ -1,40 +1,56 @@
 ﻿using Domain.DTOs;
+using Domain.Pagination;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Volunteer.BL.Helper.Exceptions;
 using Volunteer.BL.Interfaces;
+using Volunteer.BL.Services;
 
 namespace Volunteer.WebAPI.Controllers
 {
+    [Route("api/[controller]")]
+    [ApiController]
     public class JobOfferController : ControllerBase
     {
         private readonly IJobOfferService jobOfferService;
+        private readonly ICurrentUserService currentUserService;
 
-        public JobOfferController(IJobOfferService jobOfferService)
+        public JobOfferController(IJobOfferService jobOfferService, ICurrentUserService currentUserService)
         {
             this.jobOfferService = jobOfferService;
+            this.currentUserService = currentUserService;
         }
-        [HttpPost]
-        public async Task<IActionResult> CreateJobOffer([FromBody] JobOfferInfoDTO jobOfferInfoDTO)
+
+        [Authorize(Roles = "Organization")]
+        [HttpPost("createJobOffer")]
+        public async Task<IActionResult> CreateJobOffer([FromBody] CreateJobOfferDTO jobOfferDTO)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
+            }
 
-            }
-            if (jobOfferInfoDTO == null)
+            var organizationId = currentUserService.GetIdFromClaims(HttpContext.User);
+            var createJobOffer = await jobOfferService.CreateJobOffer(organizationId, jobOfferDTO);
+
+
+            if (createJobOffer != null)
             {
-                return BadRequest("Object is invalid or empty");
-            }
-            if (await jobOfferService.CreateJobOffer(jobOfferInfoDTO))
-            {
-                return Ok();    
+                return Ok(createJobOffer);
             }
             else
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Job offer not added");
+                throw new ApiException()
+                {
+                    StatusCode = StatusCodes.Status500InternalServerError,
+                    Title = "Job offer not added",
+                    Detail = "Job offer not added"
+                };
             }
         }
 
-        [HttpPut]
+        [Authorize(Roles = "Organization")]
+        [HttpPut("updateJobOffer")]
         public async Task<IActionResult> UpdateJobOffer([FromBody] JobOfferInfoDTO jobOfferInfoDTO)
         {
             if (!ModelState.IsValid)
@@ -42,76 +58,123 @@ namespace Volunteer.WebAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            if (jobOfferInfoDTO == null)
+            var updateJobOffer = await jobOfferService.UpdateJobOffer(jobOfferInfoDTO);
+
+            if (updateJobOffer != null)
             {
-                return BadRequest("Object is invalid or empty");
-            }
-            if( await jobOfferService.UpdateJobOffer(jobOfferInfoDTO))
-            {
-                return Ok();
+                return Ok(updateJobOffer);
             }
             else
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Failed to update job offer");
+                throw new ApiException()
+                {
+                    StatusCode = StatusCodes.Status500InternalServerError,
+                    Title = "Failed to change jobOffer",
+                    Detail = "Failed to change jobOffer"
+                };
             }
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetAllJobOffers()
+        [Authorize(Roles = "Organization, Volunteer")]
+        [HttpGet("{id:Guid}")]
+        public async Task<IActionResult> GetJobOfferInfo([FromRoute] Guid id)
         {
-            var jobOffers = await jobOfferService.GetAllJobOffers();
-            if (jobOffers != null && jobOffers.Count != 0)
+            var jobOffer = await jobOfferService.GetGobOfferInfo(id);
+
+            return Ok(jobOffer);
+        }
+
+        [Authorize(Roles = "Volunteer, Organization, Admin")]
+        [HttpGet("getAllJobOffers")]
+        public async Task<IActionResult> GetAllJobOffers([FromQuery] PaginationFilter filter, CancellationToken cancellationToken)
+        {
+           var jobOffers = await jobOfferService.GetAllJobOffers(filter, cancellationToken);
+
+            if (jobOffers != null)
             {
                 return Ok(jobOffers);
             }
-            else
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError,
 
-                    "Error retrieving data from the database");
-            }
+            throw new ApiException()
+            {
+                StatusCode = StatusCodes.Status500InternalServerError,
+                Title = "Error retrieving data from the database",
+                Detail = "Error retrieving data from the database"
+            };
         }
 
-        [HttpGet("{id:guid}")]
-        public async Task<IActionResult> GetGobOfferById([FromRoute]Guid id)
+        [Authorize(Roles = "Organization, Volunteer")]
+        [HttpGet("getJobOfferRequests")]
+        public async Task<IActionResult> GetJobOfferRequests([FromQuery] PaginationFilter filter, CancellationToken cancellationToken)
         {
-            if (id == Guid.Empty)
+            var volunteerId = currentUserService.GetIdFromClaims(HttpContext.User);
+            var requests = await jobOfferService.GetJobOfferRequests(volunteerId, filter, cancellationToken);
+            if (requests != null)
             {
-                return BadRequest("Id does not exist");
+                return Ok(requests);
             }
-            var jobOffer = await jobOfferService.GetGobOfferById(id);
-            if(jobOffer != null)
+
+            throw new ApiException()
             {
-                return Ok(id);
-            }
-            else
-            {
-                return NotFound("No job offer found");
-            }
+                StatusCode = StatusCodes.Status500InternalServerError,
+                Title = "Error retrieving data from the database",
+                Detail = "Error retrieving data from the database"
+            };
         }
 
-        [HttpDelete("{id:Guid}")]
-        public async Task<IActionResult> DeleteJobOfferById([FromRoute] Guid id)
+        [Authorize(Roles = "Organization")]
+        [HttpGet("getRequestsFromVolunteers")]
+        public async Task<IActionResult> GetRequestsFromVolunteers([FromQuery] PaginationFilter filter, CancellationToken cancellationToken)
         {
-            if (id == Guid.Empty)
+            var organizationId = currentUserService.GetIdFromClaims(HttpContext.User);
+
+            var requests = await jobOfferService.GetRequestsFromVolunteers(organizationId, filter, cancellationToken);
+            if (requests != null)
             {
-                return BadRequest("Id does not exist");
+                return Ok(requests);
             }
-            var jobOffer = await jobOfferService.GetGobOfferById(id);
-            if (jobOffer == null)
+
+            throw new ApiException()
             {
-                return NotFound("No job offer found");
-            }
-            if (await jobOfferService.DeleteJobOfferById(id))
-            {
-                return Ok();
-            }
-            else
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Job offer is not deleted");
-            }
+                StatusCode = StatusCodes.Status500InternalServerError,
+                Title = "Error retrieving data from the database",
+                Detail = "Error retrieving data from the database"
+            };
         }
 
+        [Authorize(Roles = "Organization, Volunteer")]
+        [HttpGet("getOfferStatus/{offerId:Guid}")]
+        public async Task<IActionResult> GetOfferStatus([FromRoute] Guid offerId)
+        {
+            var volunteerId = currentUserService.GetIdFromClaims(HttpContext.User);
 
+            var status = await jobOfferService.GetOfferStatus(volunteerId, offerId);
+
+            return status != null
+                ? (IActionResult)Ok(status)
+                : throw new ApiException()
+                {
+                    StatusCode = StatusCodes.Status500InternalServerError,
+                    Title = "Error retrieving data from the database",
+                    Detail = "Error retrieving data from the database"
+                };
+        }
+
+        [Authorize(Roles = "Organization")]
+        [HttpDelete("delete/{offerId:Guid}")]
+        public async Task<IActionResult> DeleteJobOffer([FromRoute] Guid offerId)
+        {
+            var organizationId = currentUserService.GetIdFromClaims(HttpContext.User);
+            if (await jobOfferService.DeleteJobOffer(organizationId, offerId))
+            {
+                return NoContent();
+            }
+            throw new ApiException()
+            {
+                StatusCode = StatusCodes.Status500InternalServerError,
+                Title = "Offer is not deleted",
+                Detail = "Error occured while deleting offer on server"
+            };
+        }
     }
 }

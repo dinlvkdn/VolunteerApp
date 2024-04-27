@@ -8,7 +8,12 @@ namespace Volunteer.DAL.DataAccess.Configurations
     {
         public void Configure(EntityTypeBuilder<Resume> builder)
         {
+            builder.HasOne(x => x.Volunteer)
+                .WithOne(x => x.Resume)
+                .HasForeignKey<Resume>(x => x.VolunteerId);
+
             builder.HasKey(x => x.Id);
+
         }
     }
 }

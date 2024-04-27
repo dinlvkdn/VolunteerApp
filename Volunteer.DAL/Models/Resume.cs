@@ -5,5 +5,6 @@
         public string FileUrl { get; set; }
         public string FileName { get; set; }
         public Volunteer Volunteer { get; set; }
+        public Guid VolunteerId { get; set; }
     }
 }

@@ -8,12 +8,9 @@
         public string City { get; set; }
         public string Country { get; set; }
         public string Title {  get; set; }
-
         public ICollection<VolunteerJobOffer> VolunteerJobOffers { get; set; }
-
         public Guid OrganizationId { get; set; }
         public Organization Organization { get; set; }
-
         public ICollection<Member> Members { get; set; }
     }
 }
