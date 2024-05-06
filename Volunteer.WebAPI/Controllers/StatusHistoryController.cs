@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Volunteer.BL.Helper.Exceptions;
 using Volunteer.BL.Interfaces;
-using Volunteer.BL.Services;
+using Volunteer.BL.Services;//not needed
 using Volunteer.DAL.Models;
 
 namespace Volunteer.WebAPI.Controllers
@@ -27,7 +27,7 @@ namespace Volunteer.WebAPI.Controllers
         [HttpDelete("deleteOrganization/{organizationId:Guid}")]
         public async Task<IActionResult> DeleteOrganization([FromRoute] Guid organizationId)
         {
-            var auth = Request.Headers.Authorization;
+            var auth = Request.Headers.Authorization;//same as in OrganizationController - can be extracted and reused
             using var client = new HttpClient();
 
             client.DefaultRequestHeaders.Add("Authorization", auth.ToString());

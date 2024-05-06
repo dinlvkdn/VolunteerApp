@@ -9,6 +9,8 @@ namespace Volunteer.DAL.DataAccess.Configurations
         public void Configure(EntityTypeBuilder<Feedback> builder)
         { 
             builder.HasKey(x => x.Id);
+            //here you can seed your data
+            builder.HasData(null);
         }
     }
 }

@@ -29,7 +29,7 @@ namespace Volunteer.WebAPI
 
             builder.Services.AddFluentValidationAutoValidation();
             builder.Services.AddValidatorsFromAssemblyContaining<OrganizationInfoDTOValidator>();
-            builder.Services.AddValidatorsFromAssemblyContaining<VolunteerInfoDTOValidator>();
+            builder.Services.AddValidatorsFromAssemblyContaining<VolunteerInfoDTOValidator>();//you don't need lines 32-33. line 31 already registered validators from the whole assembly
             builder.Services.AddValidatorsFromAssemblyContaining<VolunteerShortInfoDTOValidator>();
 
             builder.Services.AddScoped<IJobOfferService,JobOfferService>();
@@ -89,7 +89,8 @@ namespace Volunteer.WebAPI
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
                         ValidateIssuer = true,
-                        ValidIssuer = builder.Configuration["JwtOptions:Issuer"],
+                        ValidIssuer = builder.Configuration["JwtOptions:Issuer"],//not OK, better to extract configs into JwtOptions object and then assign here.
+                                                                                 //it is very easy to forget to update this place after you updated appSettings.json
 
                         ValidateAudience = true,
                         ValidAudience = builder.Configuration["JwtOptions:Audience"],

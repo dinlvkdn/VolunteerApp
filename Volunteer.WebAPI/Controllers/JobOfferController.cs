@@ -4,11 +4,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Volunteer.BL.Helper.Exceptions;
 using Volunteer.BL.Interfaces;
-using Volunteer.BL.Services;
+using Volunteer.BL.Services;//not needed
 
 namespace Volunteer.WebAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]")]//not a problem but simplifies life. you could do [Route("api/[controller]/[action]")] and you wouldn't need to write route on every method
     [ApiController]
     public class JobOfferController : ControllerBase
     {
@@ -36,9 +36,9 @@ namespace Volunteer.WebAPI.Controllers
 
             if (createJobOffer != null)
             {
-                return Ok(createJobOffer);
+                return Ok(createJobOffer);//it is OK to return Ok(...) in this case but to be more clear you can use Created(...) or CreatedAtAction(...) methods
             }
-            else
+            else//you don't return null anywhere. this code is not needed. anyway, never throw an exception in controller
             {
                 throw new ApiException()
                 {
@@ -151,7 +151,7 @@ namespace Volunteer.WebAPI.Controllers
             var status = await jobOfferService.GetOfferStatus(volunteerId, offerId);
 
             return status != null
-                ? (IActionResult)Ok(status)
+                ? (IActionResult)Ok(status)//no need to cast, it is already of type IActionResult
                 : throw new ApiException()
                 {
                     StatusCode = StatusCodes.Status500InternalServerError,

@@ -124,7 +124,8 @@ namespace Volunteer.BL.Services
 
             var isMember = _dbContext.Members
                 .Where(t => t.JobOfferId == jobOfferId && t.VolunteerId == volunteerId)
-                .FirstOrDefault();
+                .FirstOrDefault();//can be .FirstOrDefault(t => t.JobOfferId == jobOfferId && t.VolunteerId == volunteerId) without .Where(...)
+            //or you can use IsMember
 
             if (isMember == null)
             {
@@ -187,10 +188,10 @@ namespace Volunteer.BL.Services
 
         public async Task<bool> IsMember(Guid organizationId, Guid volunteerId)
         {
-            var isMember = await _dbContext.Members
+            return await _dbContext.Members
                 .AnyAsync(m => m.VolunteerId == volunteerId && m.JobOffer.OrganizationId == organizationId);
 
-            if (isMember)
+            if (isMember)//funny :)
             {
                 return true;
             }
