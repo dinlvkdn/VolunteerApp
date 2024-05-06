@@ -4,7 +4,7 @@
     {
         public int PageNumber { get; set; }
         public int PageSize { get; set; }
-        public string SortDirection { get; set; }
+        public string SortDirection { get; set; }//can be boolean like IsAscending { get; set; }
         public string SortColumn { get; set; }
 
         public Guid? OrganizationId { get; set; }

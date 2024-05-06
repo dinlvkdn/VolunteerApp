@@ -24,7 +24,7 @@
     <ProjectReference Include="..\Volunteer.DAL\Volunteer.DAL.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
+  <ItemGroup><!--not needed-->
     <Folder Include="Uploads\StaticContent\" />
   </ItemGroup>
 

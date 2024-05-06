@@ -2,7 +2,7 @@
 {
     public enum StatusRequest
     {
-        unapprove,
+        unapprove,//keep the naming consistent - Disapproved, Confirmed, Rejected
         confirm,
         rejected
     }

@@ -25,7 +25,7 @@ namespace Volunteer.BL.Helper.ValidatorsDTO
         }
         private bool BeAValidDate(DateTime date)
         {
-            return date <= DateTime.Now; 
+            return date <= DateTime.Now;//this must depend on user timezone, but OK for now
         }
     }
 }

@@ -3,7 +3,7 @@ using Volunteer.DAL.Models;
 
 namespace Volunteer.WebAPI
 {
-    public class DataSeeder
+    public class DataSeeder//custom data seeder is not OK. better to generate that data with entityBuilder
     {
         private readonly VolunteerDBContext _volunteerDBContext;
 

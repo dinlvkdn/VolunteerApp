@@ -63,7 +63,7 @@ namespace Volunteer.WebAPI.Controllers
         [HttpDelete]
         public async Task<IActionResult> DeleteOrganization()
         {
-            var id = currentUserService.GetIdFromClaims(HttpContext.User);
+            var id = currentUserService.GetIdFromClaims(HttpContext.User);//lines 66-72 may be extracted into separate service
             var auth = Request.Headers.Authorization;
             using var client = new HttpClient();
 
