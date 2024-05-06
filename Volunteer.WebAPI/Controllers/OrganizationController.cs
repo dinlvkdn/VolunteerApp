@@ -64,6 +64,9 @@ namespace Volunteer.WebAPI.Controllers
         public async Task<IActionResult> DeleteOrganization()
         {
             var id = currentUserService.GetIdFromClaims(HttpContext.User);
+            
+            //TODO: controller is not a good place for a logic like this. It should be as thin as possible 
+            //TODO: consider moving all this logic to the service layer
             var auth = Request.Headers.Authorization;
             using var client = new HttpClient();
 
@@ -197,8 +200,8 @@ namespace Volunteer.WebAPI.Controllers
         [HttpGet("downloadResume/{volunteerId:Guid}")]
         public async Task<IActionResult> DownloadResume([FromRoute] Guid volunteerId)
         {
-            var result = await resumeService.DownloadResume(volunteerId);
-            if (result.Item1 == null || result.Item2 == null || result.Item3 == null)
+            var (bytes, contentType, path) = await resumeService.DownloadResume(volunteerId);
+            if (bytes == null || contentType == null || path == null)
             {
                 throw new ApiException()
                 {
@@ -207,7 +210,7 @@ namespace Volunteer.WebAPI.Controllers
                     Detail = "Error occured while downloading resume from server"
                 };
             }
-            return File(result.Item1, result.Item2, result.Item3);
+            return File(bytes, contentType, path);
         }
 
         [Authorize(Roles = "Organization")]

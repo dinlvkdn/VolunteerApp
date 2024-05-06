@@ -94,7 +94,7 @@ namespace Volunteer.BL.Services
 
         public async Task<ShowJobOfferDTO> GetGobOfferInfo(Guid id)
         {
-            var jobOffer = await _dbContext.JobOffer.FirstOrDefaultAsync(i => i.Id == id);
+            var jobOffer = await _dbContext.JobOffer.FirstAsync(i => i.Id == id);
             var organization = await _dbContext.Organizations
                 .FirstOrDefaultAsync(o => o.Id == jobOffer.OrganizationId);
 
@@ -118,12 +118,13 @@ namespace Volunteer.BL.Services
                 JobOfferCountry = jobOffer.Country,
                 JobOfferStreet = jobOffer.Street,
                 JobOfferTitle = jobOffer.Title,
-                OrganizationId = organization.Id,
+                OrganizationId = organization.Id, //TODO: what if organization is null here? it's taken using FirstOrDefaultAsync
                 OrganizationName = organization.Name
             };
         }
         public async Task<JobOffer> GetGobOfferById(Guid id)
         {
+            //TODO: return type should be JobOffer?, nullable
             return await _dbContext.JobOffer.FirstOrDefaultAsync(i => i.Id == id);
         }
 
