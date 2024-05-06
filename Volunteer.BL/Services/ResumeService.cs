@@ -19,11 +19,10 @@ namespace Volunteer.BL.Services
 
         public async Task<(byte[], string, string)> DownloadResume(Guid volunteerId)
         {
-          
             var resume = await _dbContext.Resumes.Where(f => f.VolunteerId == volunteerId).FirstOrDefaultAsync();
             if (resume == null)
             {
-                throw new ApiException()
+                throw new ApiException
                 {
                     StatusCode = StatusCodes.Status404NotFound,
                     Title = "Can`t find resume",
@@ -42,13 +41,12 @@ namespace Volunteer.BL.Services
          
         public async Task<string> UploadResume(IFormFile file, Guid volunteerId)
         {
-            
-            string FileName = "";
+            string fileName;
             try
             {
-                FileName = volunteerId.ToString();
+                fileName = volunteerId.ToString();
 
-                var existingResume = await _dbContext.Resumes.FirstOrDefaultAsync(r => r.FileName == FileName);
+                var existingResume = await _dbContext.Resumes.FirstOrDefaultAsync(r => r.FileName == fileName);
                 if (existingResume != null)
                 {
                     throw new ApiException()
@@ -59,24 +57,24 @@ namespace Volunteer.BL.Services
                     };
                 }
 
-                var _getFilePath = GetFilePath(FileName);
+                var getFilePath = GetFilePath(fileName);
 
-                using var _FileStream = new FileStream(_getFilePath, FileMode.Create);
-                await file.CopyToAsync(_FileStream);
+                await using var fileStream = new FileStream(getFilePath, FileMode.Create);
+                await file.CopyToAsync(fileStream);
 
                 var resume = new Resume
                 {
                     Id = Guid.NewGuid(),
-                    FileUrl = _getFilePath,
-                    FileName = FileName,
+                    FileUrl = getFilePath,
+                    FileName = fileName,
                     VolunteerId = volunteerId
                 };
                 await _dbContext.Resumes.AddAsync(resume);
 
                 await _dbContext.SaveChangesAsync();
-                return FileName;
+                return fileName;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 throw new ApiException()
                 {
@@ -90,7 +88,7 @@ namespace Volunteer.BL.Services
 
         public static string GetStaticContentDirectory()
         {
-            var result = "C:\\Users\\Diana\\Exoft\\ResumeUploads";
+            const string result = "C:\\Users\\Diana\\Exoft\\ResumeUploads";
             if (!Directory.Exists(result))
             {
                 Directory.CreateDirectory(result);
@@ -101,9 +99,9 @@ namespace Volunteer.BL.Services
 
         public static string GetFilePath(string fileName)
         {
-            var _GetStaticContentDirectory = GetStaticContentDirectory();
+            var getStaticContentDirectory = GetStaticContentDirectory();
 
-            return Path.Combine(_GetStaticContentDirectory, fileName);
+            return Path.Combine(getStaticContentDirectory, fileName);
         }
 
         public async Task<bool> SaveChangesAsync()

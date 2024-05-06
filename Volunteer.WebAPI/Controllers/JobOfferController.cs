@@ -22,7 +22,7 @@ namespace Volunteer.WebAPI.Controllers
         }
 
         [Authorize(Roles = "Organization")]
-        [HttpPost("createJobOffer")]
+        [HttpPost]
         public async Task<IActionResult> CreateJobOffer([FromBody] CreateJobOfferDTO jobOfferDTO)
         {
             if (!ModelState.IsValid)
@@ -31,22 +31,20 @@ namespace Volunteer.WebAPI.Controllers
             }
 
             var organizationId = currentUserService.GetIdFromClaims(HttpContext.User);
-            var createJobOffer = await jobOfferService.CreateJobOffer(organizationId, jobOfferDTO);
+            await jobOfferService.CreateJobOffer(organizationId, jobOfferDTO);
 
+            //TODO: based on implementation createJobOffer cannot be null. Either it exists or there will be exception thrown
+            // if (createJobOffer != null)
+            // {
+            //     return Ok(createJobOffer);
+            // }
 
-            if (createJobOffer != null)
+            throw new ApiException
             {
-                return Ok(createJobOffer);
-            }
-            else
-            {
-                throw new ApiException()
-                {
-                    StatusCode = StatusCodes.Status500InternalServerError,
-                    Title = "Job offer not added",
-                    Detail = "Job offer not added"
-                };
-            }
+                StatusCode = StatusCodes.Status500InternalServerError,
+                Title = "Job offer not added",
+                Detail = "Job offer not added"
+            };
         }
 
         [Authorize(Roles = "Organization")]
